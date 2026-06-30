@@ -3,7 +3,7 @@ import React from 'react';
 const AiTools = () => {
     return (
         <div>
-            This is an AI Tools Page
+            {/* This is an AI Tools Page */}
             
         </div>
     );
