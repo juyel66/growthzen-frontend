@@ -1,6 +1,11 @@
 
 
 const DashboardLayout = ({children}: {children: React.ReactNode}) => {
+
+    
+
+
+
     return (
         <div>
             <h1>This is navbar</h1>
