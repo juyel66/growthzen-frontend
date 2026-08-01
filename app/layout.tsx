@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AdPortal",
-  description: "AI Based AdPortal System",
+  title: "GrowthZen - Trends",
+  description: "AI Based GrowthZen System",
 };
 
 export default function RootLayout({
