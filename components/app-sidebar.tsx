@@ -203,27 +203,7 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
           </SidebarGroup>
 
           {/* Plan card (you can hide this for admin if you want using isAdmin) */}
-          <div className="mx-4 mt-6 rounded-2xl bg-[#F6F7FB] p-4 text-xs text-gray-600 shadow-sm">
-            <div className="mb-2 flex items-center justify-between text-[11px] text-gray-500">
-              <span>Current Plan</span>
-              <button className="text-[10px] text-gray-400">▼</button>
-            </div>
-            <div className="mb-2 text-sm font-semibold text-gray-800">
-              Growth Plan
-            </div>
-            <div className="mb-2 text-[11px] text-gray-500">
-              65 of 100 campaigns used
-            </div>
-            <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-[#E5E7EB]">
-              <div
-                className="h-full rounded-full bg-[#2D6FF8]"
-                style={{ width: "65%" }}
-              />
-            </div>
-            <button className="w-full rounded-lg bg-[#2D6FF8] py-1.5 text-xs font-medium text-white">
-              Upgrade Plan
-            </button>
-          </div>
+       
         </div>
 
         {/* BOTTOM: Logout */}
