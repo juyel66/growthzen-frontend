@@ -12,6 +12,8 @@ import {
   Users,
   Settings,
   LogOut,
+  ListOrdered,
+  UserCheck2Icon,
 } from "lucide-react";
 
 import {
@@ -25,56 +27,16 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Image from "next/image";
+import { CgProfile } from "react-icons/cg";
+import { url } from "inspector/promises";
 
 // ---- MENU ITEMS ----
 
 // User menu items (your current design)
 const userItems = [
-  {
-    title: "Dashboard",
-    url: "/user-dashboard/dashboard",
-    icon: Home,
-  },
-  {
-    title: "Campaigns",
-    url: "/user-dashboard/campaigns",
-    icon: Megaphone,
-  },
-  {
-    title: "AI Tools",
-    url: "/user-dashboard/ai-tools",
-    icon: Wand2,
-  },
-  {
-    title: "Analytics",
-    url: "/user-dashboard/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Reports",
-    url: "/user-dashboard/reports",
-    icon: FileText,
-  },
-  {
-    title: "Subscription",
-    url: "/user-dashboard/subscription",
-    icon: CreditCard,
-  },
-  {
-    title: "Team",
-    url: "/user-dashboard/team",
-    icon: Users,
-  },
-  {
-    title: "Settings",
-    url: "/user-dashboard/settings",
-    icon: Settings,
-  },
-];
 
-// Admin menu items (matching the admin screenshot)
-const adminItems = [
-  {
+
+    {
     title: "Dashboard",
     url: "/admin-dashboard/dashboard",
     icon: Home,
@@ -109,6 +71,66 @@ const adminItems = [
     url: "/admin-dashboard/settings",
     icon: Settings,
   },
+
+];
+
+// Admin menu items (matching the admin screenshot)
+const adminItems = [
+
+
+
+
+
+    {
+    title: "Dashboard",
+    url: "/admin-dashboard/dashboard",
+    icon: Home,
+  },
+  {
+    title: "Orders",
+    url: "/admin-dashboard/orders",
+    icon: ListOrdered,
+  },
+  {
+    title: "Payments",
+    url: "/admin-dashboard/payments",
+    icon: CreditCard,
+  },
+  {
+    title: "Shipping",
+    url: "/admin-dashboard/shipping",
+    icon: BarChart3,
+  },
+  {
+    title: "Customers",
+    url: "/admin-dashboard/customers",
+    icon: Users,
+  },
+  {
+    title: "User Management",
+    url: "/admin-dashboard/user-management",
+    icon: UserCheck2Icon,
+  },
+  {
+    title: "Reports",
+    url: "/admin-dashboard/reports",
+    icon: FileText,
+  },
+  
+  {
+    title: "Settings",
+    url: "/admin-dashboard/settings",
+    icon: Settings,
+  },
+  {
+    title: "Profile",
+    url: "/admin-dashboard/profile",
+    icon: CgProfile,
+  },
+
+
+
+
 ];
 
 // colors from your design
@@ -121,7 +143,7 @@ const HOVER_BG = "#EEF3FF"; // light bluish
 // 👇 UPDATED: accept isAdmin prop and choose items based on that
 export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
-  const items = isAdmin ? adminItems : userItems;
+  const items = isAdmin ? adminItems : adminItems;
 
   return (
     <Sidebar className="border-r bg-white pr-2">
@@ -133,11 +155,11 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
 
 
             <Image
-              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1765309106/Rectangle_ktqcsy.png"
-              alt="AdPortal Logo"
-              width={160}
-              height={160}
-              className="h-[66px] w-[200]"
+              src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1785603633/ChatGPT_Image_Aug_1_2026_10_56_41_PM_1_vd6zar.png"
+              alt="GrowthZen Logo"
+              width={180}
+              height={180}
+              className="h-[50px] w-[200px]"
             />
 
 

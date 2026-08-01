@@ -1,12 +1,12 @@
 import React from 'react';
 
-const Campaigns = () => {
+const page = () => {
     return (
         <div>
-            This is a Campaigns Page
+            This is the Admin Finance Page
             
         </div>
     );
 };
 
-export default Campaigns;
+export default page;
