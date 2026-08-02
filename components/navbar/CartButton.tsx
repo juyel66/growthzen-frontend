@@ -9,12 +9,9 @@ import { useGetCartQuery } from '@/services/cartApi';
 export const CartButton = () => {
   const theme = useTheme();
   
-  // Connect API trigger, skip active fetch for now, fall back to dummy/local count
-  const { data: cartData } = useGetCartQuery(undefined, {
-    skip: true, // skipped for now to avoid mock error logs, easily toggle to connect
-  });
+  const { data: cartData } = useGetCartQuery();
 
-  const count = cartData?.totalQuantity ?? 5; // Static badge placeholder for demo
+  const count = cartData?.totalQuantity ?? cartData?.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) ?? 0;
 
   return (
     <Link
