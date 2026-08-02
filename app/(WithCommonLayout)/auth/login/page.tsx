@@ -58,11 +58,9 @@ function LoginContent() {
       const refreshToken = result.refreshToken || '';
 
       if (accessToken) {
-        // Store Access Token strictly in Redux memory
         dispatch(
           setCredentials({
             token: accessToken,
-            refreshToken,
             user: result.user || null,
           })
         );
