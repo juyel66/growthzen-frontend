@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppSelector } from '@/redux/hooks';
 import { UserRole } from '@/types/auth';
+import SessionRestoreLoader from './SessionRestoreLoader';
 
 export function getRoleDashboardPath(role?: UserRole | string | null): string {
   if (!role) return '/user-dashboard/dashboard';
@@ -25,21 +26,17 @@ interface GuardProps {
 // Guest Guard: Prevents logged-in users from accessing Login, Register, Forgot Password, etc.
 export const GuestGuard: React.FC<GuardProps> = ({ children }) => {
   const router = useRouter();
-  const { isAuthenticated, isInitialized, user } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, isInitialized, isRestoring, user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    if (isInitialized && isAuthenticated && user) {
+    if (isInitialized && !isRestoring && isAuthenticated && user) {
       const redirectPath = getRoleDashboardPath(user.role);
       router.replace(redirectPath);
     }
-  }, [isAuthenticated, isInitialized, router, user]);
+  }, [isAuthenticated, isInitialized, isRestoring, router, user]);
 
-  if (!isInitialized) {
-    return (
-      <div className="w-full h-96 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+  if (!isInitialized || isRestoring) {
+    return <SessionRestoreLoader message="Verifying session..." />;
   }
 
   if (isAuthenticated) {
@@ -52,23 +49,16 @@ export const GuestGuard: React.FC<GuardProps> = ({ children }) => {
 // Private Route Guard: Prevents unauthenticated users from accessing protected pages
 export const PrivateRoute: React.FC<GuardProps> = ({ children }) => {
   const router = useRouter();
-  const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, isInitialized, isRestoring } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
-    if (isInitialized && !isAuthenticated) {
+    if (isInitialized && !isRestoring && !isAuthenticated) {
       router.replace('/auth/login');
     }
-  }, [isAuthenticated, isInitialized, router]);
+  }, [isAuthenticated, isInitialized, isRestoring, router]);
 
-  if (!isInitialized) {
-    return (
-      <div className="w-full min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-semibold text-slate-500">Verifying session...</span>
-        </div>
-      </div>
-    );
+  if (!isInitialized || isRestoring) {
+    return <SessionRestoreLoader message="Verifying session security..." />;
   }
 
   if (!isAuthenticated) {
@@ -85,7 +75,7 @@ interface RoleGuardProps extends GuardProps {
 
 export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) => {
   const router = useRouter();
-  const { isAuthenticated, isInitialized, user } = useAppSelector((state) => state.auth);
+  const { isAuthenticated, isInitialized, isRestoring, user } = useAppSelector((state) => state.auth);
 
   const hasAccess =
     user &&
@@ -94,7 +84,7 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) 
     );
 
   useEffect(() => {
-    if (isInitialized) {
+    if (isInitialized && !isRestoring) {
       if (!isAuthenticated) {
         router.replace('/auth/login');
       } else if (!hasAccess) {
@@ -102,17 +92,14 @@ export const RoleGuard: React.FC<RoleGuardProps> = ({ allowedRoles, children }) 
         router.replace(fallback);
       }
     }
-  }, [hasAccess, isAuthenticated, isInitialized, router, user]);
+  }, [hasAccess, isAuthenticated, isInitialized, isRestoring, router, user]);
 
-  if (!isInitialized || !isAuthenticated || !hasAccess) {
-    return (
-      <div className="w-full min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-sm font-semibold text-slate-500">Checking permissions...</span>
-        </div>
-      </div>
-    );
+  if (!isInitialized || isRestoring) {
+    return <SessionRestoreLoader message="Checking security permissions..." />;
+  }
+
+  if (!isAuthenticated || !hasAccess) {
+    return null;
   }
 
   return <>{children}</>;
