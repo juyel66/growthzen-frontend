@@ -14,6 +14,7 @@ import {
   LogOut,
   ListOrdered,
   UserCheck2Icon,
+  FolderTree,
 } from "lucide-react";
 
 import {
@@ -28,7 +29,12 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import { CgProfile } from "react-icons/cg";
-import { url } from "inspector/promises";
+import { useRouter } from "next/navigation";
+import { useAppDispatch } from "@/redux/hooks";
+import { logOut } from "@/features/auth/authSlice";
+import { useLogoutMutation } from "@/services/authApi";
+import { baseApi } from "@/services/baseApi";
+import Swal from "sweetalert2";
 
 // ---- MENU ITEMS ----
 
@@ -86,11 +92,22 @@ const adminItems = [
     url: "/admin-dashboard/dashboard",
     icon: Home,
   },
+   {
+    title: "Categories",
+    url: "/admin-dashboard/products/categories",
+    icon: FolderTree,
+  },
+   {
+    title: "Products",
+    url: "/admin-dashboard/products",
+    icon: Wand2,
+  },
   {
     title: "Orders",
     url: "/admin-dashboard/orders",
     icon: ListOrdered,
   },
+ 
   {
     title: "Payments",
     url: "/admin-dashboard/payments",
@@ -143,7 +160,32 @@ const HOVER_BG = "#EEF3FF"; // light bluish
 // 👇 UPDATED: accept isAdmin prop and choose items based on that
 export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const [logoutApi] = useLogoutMutation();
+
   const items = isAdmin ? adminItems : adminItems;
+
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch {
+      // Ignore network errors on logout API call
+    } finally {
+      dispatch(logOut());
+      dispatch(baseApi.util.resetApiState());
+      Swal.fire({
+        icon: 'success',
+        title: 'Logged Out',
+        text: 'You have been successfully logged out.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+      });
+      router.push('/auth/login');
+    }
+  };
 
   return (
     <Sidebar className="border-r bg-white pr-2">
@@ -163,56 +205,41 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
             />
 
 
-          </div></div>
+          </div>
 
-          <SidebarGroup>
-            <SidebarGroupLabel className="px-4 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
-              {/* empty label to match spacing */}
-            </SidebarGroupLabel>
+          <p className="border-b px-[50px] pb-2 text-[9px] text-[#A7B2C3]">Grow Your Business with Us</p>
+</div>
+
+          {/* Navigation Links */}
+          <SidebarGroup className="mt-4">
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-2">
                 {items.map((item) => {
-                  const isActive =
-                    pathname === item.url || pathname.startsWith(item.url + "/");
-
+                  const isActive = pathname === item.url;
                   const Icon = item.icon;
 
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild
-                        className={`group mx-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
-                          isActive
-                            ? "bg-[#2D6FF8] text-white shadow-sm"
-                            : "text-[var(--inactive-text)] hover:bg-[var(--hover-bg)]"
-                        }`}
-                        style={
-                          isActive
-                            ? {
-                                backgroundColor: ACTIVE_BG,
-                                color: ACTIVE_TEXT,
-                              }
-                            : {
-                                color: INACTIVE_TEXT,
-                              }
-                        }
+                        tooltip={item.title}
+                        className="rounded-xl font-[#A7B2C3] font-semibold transition-colors duration-150"
+                        style={{
+                          backgroundColor: isActive ? ACTIVE_BG : "transparent",
+                          color: isActive ? ACTIVE_TEXT : INACTIVE_TEXT,
+                        }}
                       >
                         <Link
                           href={item.url}
-                          className="flex items-center gap-3"
+                          className="flex items-center gap-3 px-4 py-[20px]"
                         >
                           <Icon
-                            className="h-4 w-4"
+                            className="h-[20px] w-[20px]"
                             style={{
                               color: isActive ? ACTIVE_TEXT : INACTIVE_ICON,
                             }}
                           />
-                          <span
-                            className="truncate"
-                            style={{
-                              color: isActive ? ACTIVE_TEXT : INACTIVE_TEXT,
-                            }}
-                          >
+                          <span className="text-[15px] font-[500]">
                             {item.title}
                           </span>
                         </Link>
@@ -230,7 +257,10 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
 
         {/* BOTTOM: Logout */}
         <div className="mt-4 border-t border-gray-100 pt-4">
-          <button className="mx-4 flex w-[calc(100%-2rem)] items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-[#EF4444] hover:bg-red-50">
+          <button
+            onClick={handleLogout}
+            className="mx-4 flex w-[calc(100%-2rem)] items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-[#EF4444] hover:bg-red-50 cursor-pointer"
+          >
             <LogOut className="h-4 w-4" />
             <span>Log out</span>
           </button>
