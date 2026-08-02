@@ -1,6 +1,7 @@
 import { fetchBaseQuery, BaseQueryFn, FetchArgs, FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import { updateToken, logOut } from '@/features/auth/authSlice';
 import { AuthState } from '@/types/auth';
+import { getAccessToken } from '@/lib/tokenStorage';
 
 interface RootState {
   auth: AuthState;
@@ -10,9 +11,10 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const baseQuery = fetchBaseQuery({
   baseUrl,
+  credentials: 'include',
   prepareHeaders: (headers, { getState }) => {
     const state = getState() as RootState;
-    const token = state.auth?.token;
+    const token = state.auth?.token || getAccessToken();
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
@@ -41,9 +43,16 @@ export const baseQueryWithReauth: BaseQueryFn<
   let result = await baseQuery(args, api, extraOptions);
 
   if (result.error && result.error.status === 401) {
-    // Avoid infinite refresh loops if the failing request IS the refresh token call itself
     const urlString = typeof args === 'string' ? args : args.url;
-    if (urlString.includes('/auth/refresh-token') || urlString.includes('/auth/login')) {
+
+    // Avoid infinite refresh loops if failing request IS login, logout, refresh-token, register, etc.
+    if (
+      urlString.includes('/auth/refresh-token') ||
+      urlString.includes('/auth/login') ||
+      urlString.includes('/auth/register') ||
+      urlString.includes('/auth/forgot-password') ||
+      urlString.includes('/auth/reset-password')
+    ) {
       return result;
     }
 
@@ -60,33 +69,28 @@ export const baseQueryWithReauth: BaseQueryFn<
       });
     }
 
-    const state = api.getState() as RootState;
-    const refreshTokenValue = state.auth?.refreshToken;
-
     isRefreshing = true;
 
     try {
-      // POST /auth/refresh-token endpoint
+      // POST /auth/refresh-token with credentials: 'include' (sends HttpOnly refreshToken cookie)
       const refreshResult = await fetch(`${baseUrl}/auth/refresh-token`, {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ refreshToken: refreshTokenValue || '' }),
       });
 
       if (refreshResult.ok) {
         const data = await refreshResult.json();
         const payload = data?.data || data;
         const newAccessToken = payload?.accessToken || payload?.token;
-        const newRefreshToken = payload?.refreshToken || refreshTokenValue;
 
         if (newAccessToken) {
-          // Dispatch updated token
+          // Dispatch updated token (persists to sessionStorage as well)
           api.dispatch(
             updateToken({
               token: newAccessToken,
-              refreshToken: newRefreshToken,
             })
           );
 
