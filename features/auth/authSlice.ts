@@ -1,12 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { AuthState, User } from '@/types/auth';
+import { AuthState, User, UserRole } from '@/types/auth';
+import { getAccessToken, setAccessToken, removeAccessToken } from '@/lib/tokenStorage';
+
+const initialToken = getAccessToken();
 
 const initialState: AuthState = {
-  token: null,
-  refreshToken: null,
+  token: initialToken,
   user: null,
-  isAuthenticated: false,
+  role: null,
+  isAuthenticated: Boolean(initialToken),
   isInitialized: false,
+  isRestoring: true,
 };
 
 const authSlice = createSlice({
@@ -15,51 +19,77 @@ const authSlice = createSlice({
   reducers: {
     setCredentials: (
       state,
-      action: PayloadAction<{ token: string; refreshToken?: string | null; user?: User | null }>
+      action: PayloadAction<{ token: string; user?: User | null }>
     ) => {
-      const { token, refreshToken, user } = action.payload;
+      const { token, user } = action.payload;
       state.token = token;
-      if (refreshToken !== undefined) {
-        state.refreshToken = refreshToken;
-      }
+      setAccessToken(token);
+
       if (user !== undefined) {
         state.user = user;
+        state.role = user?.role || null;
       }
       state.isAuthenticated = Boolean(token);
       state.isInitialized = true;
+      state.isRestoring = false;
     },
+
     updateToken: (
       state,
-      action: PayloadAction<{ token: string; refreshToken?: string }>
+      action: PayloadAction<{ token: string }>
     ) => {
-      state.token = action.payload.token;
-      if (action.payload.refreshToken) {
-        state.refreshToken = action.payload.refreshToken;
-      }
-      state.isAuthenticated = true;
+      const { token } = action.payload;
+      state.token = token;
+      setAccessToken(token);
+      state.isAuthenticated = Boolean(token);
     },
+
     setUser: (state, action: PayloadAction<User | null>) => {
-      state.user = action.payload;
-      state.isAuthenticated = Boolean(state.token || action.payload);
+      const user = action.payload;
+      state.user = user;
+      state.role = user?.role || null;
+      state.isAuthenticated = Boolean(state.token || user);
       state.isInitialized = true;
+      state.isRestoring = false;
     },
+
     setInitialized: (state, action: PayloadAction<boolean>) => {
       state.isInitialized = action.payload;
+      if (action.payload) {
+        state.isRestoring = false;
+      }
     },
+
+    setRestoring: (state, action: PayloadAction<boolean>) => {
+      state.isRestoring = action.payload;
+    },
+
     logOut: (state) => {
       state.token = null;
-      state.refreshToken = null;
       state.user = null;
+      state.role = null;
       state.isAuthenticated = false;
       state.isInitialized = true;
+      state.isRestoring = false;
+      removeAccessToken();
     },
   },
 });
 
-export const { setCredentials, updateToken, setUser, setInitialized, logOut } = authSlice.actions;
+export const {
+  setCredentials,
+  updateToken,
+  setUser,
+  setInitialized,
+  setRestoring,
+  logOut,
+} = authSlice.actions;
+
 export default authSlice.reducer;
 
-export const selectCurrentUser = (state: { auth: AuthState }) => state.auth.user;
-export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
-export const selectIsAuthInitialized = (state: { auth: AuthState }) => state.auth.isInitialized;
-export const selectAuthToken = (state: { auth: AuthState }) => state.auth.token;
+export const selectCurrentUser = (state: { auth: AuthState }): User | null => state.auth.user;
+export const selectUserRole = (state: { auth: AuthState }): UserRole | null => state.auth.role;
+export const selectIsAuthenticated = (state: { auth: AuthState }): boolean => state.auth.isAuthenticated;
+export const selectIsAuthInitialized = (state: { auth: AuthState }): boolean => state.auth.isInitialized;
+export const selectIsRestoring = (state: { auth: AuthState }): boolean => state.auth.isRestoring;
+export const selectAuthToken = (state: { auth: AuthState }): string | null => state.auth.token;
