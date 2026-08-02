@@ -23,10 +23,12 @@ export interface User {
 
 export interface AuthState {
   token: string | null;
-  refreshToken: string | null;
   user: User | null;
+  role: UserRole | null;
   isAuthenticated: boolean;
   isInitialized: boolean;
+  isRestoring: boolean;
+  refreshToken?: string | null;
 }
 
 export interface RegisterInput {
