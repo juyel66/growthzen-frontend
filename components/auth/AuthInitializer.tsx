@@ -2,14 +2,15 @@
 
 import React, { useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { setCredentials, setUser, setInitialized } from '@/features/auth/authSlice';
+import { updateToken, setUser, setInitialized, logOut } from '@/features/auth/authSlice';
 import { useLazyGetMeQuery } from '@/services/authApi';
+import { getAccessToken } from '@/lib/tokenStorage';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useAppDispatch();
-  const { isInitialized, token, refreshToken } = useAppSelector((state) => state.auth);
+  const { isInitialized } = useAppSelector((state) => state.auth);
   const [triggerGetMe] = useLazyGetMeQuery();
 
   useEffect(() => {
@@ -18,52 +19,60 @@ export const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ child
     let isMounted = true;
 
     const restoreSession = async () => {
+      const savedToken = getAccessToken();
+
       try {
-        // 1. If we already have token & refreshToken, attempt getMe directly
-        if (token) {
-          const userRes = await triggerGetMe().unwrap();
-          if (isMounted && userRes) {
-            dispatch(setUser(userRes));
-            return;
+        // Step 1: If Access Token exists in sessionStorage, restore & verify via GET /auth/me
+        if (savedToken) {
+          dispatch(updateToken({ token: savedToken }));
+
+          try {
+            const userRes = await triggerGetMe().unwrap();
+            if (isMounted && userRes) {
+              dispatch(setUser(userRes));
+              return;
+            }
+          } catch (meError: any) {
+            // If GET /auth/me returned 401, proceed to refresh token restore
           }
         }
 
-        // 2. Otherwise attempt refresh token restore
-        if (refreshToken) {
-          const refreshRes = await fetch(`${baseUrl}/auth/refresh-token`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ refreshToken }),
-          });
+        // Step 2: Attempt Refresh Token restore via HttpOnly Cookie (POST /auth/refresh-token)
+        const refreshRes = await fetch(`${baseUrl}/auth/refresh-token`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+        });
 
-          if (refreshRes.ok) {
-            const data = await refreshRes.json();
-            const payload = data?.data || data;
-            const newAccessToken = payload?.accessToken || payload?.token;
-            const newRefreshToken = payload?.refreshToken || refreshToken;
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          const payload = data?.data || data;
+          const newAccessToken = payload?.accessToken || payload?.token;
 
-            if (newAccessToken && isMounted) {
-              dispatch(
-                setCredentials({
-                  token: newAccessToken,
-                  refreshToken: newRefreshToken,
-                })
-              );
+          if (newAccessToken && isMounted) {
+            dispatch(updateToken({ token: newAccessToken }));
 
-              // Fetch user profile via GET /auth/me
-              try {
-                const userObj = await triggerGetMe().unwrap();
-                if (isMounted && userObj) {
-                  dispatch(setUser(userObj));
-                }
-              } catch {
-                // If profile fails, leave initialized
+            // Fetch user profile after token refresh
+            try {
+              const userObj = await triggerGetMe().unwrap();
+              if (isMounted && userObj) {
+                dispatch(setUser(userObj));
+                return;
               }
+            } catch {
+              // If profile fetch fails after refresh
             }
           }
         }
+
+        // Step 3: If session restoration fails completely, clear state
+        if (isMounted) {
+          dispatch(logOut());
+        }
       } catch {
-        // Fallback silently if session cannot be restored
+        if (isMounted) {
+          dispatch(logOut());
+        }
       } finally {
         if (isMounted) {
           dispatch(setInitialized(true));
@@ -76,7 +85,7 @@ export const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ child
     return () => {
       isMounted = false;
     };
-  }, [dispatch, isInitialized, refreshToken, token, triggerGetMe]);
+  }, [dispatch, isInitialized, triggerGetMe]);
 
   return <>{children}</>;
 };
