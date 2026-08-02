@@ -5,14 +5,24 @@ export const cartApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCart: builder.query<Cart, void>({
       query: () => '/cart',
+      transformResponse: (response: any) => {
+        if (!response) return { id: '', items: [], totalQuantity: 0, totalAmount: 0, createdAt: '', updatedAt: '' };
+        if (response.data) return response.data;
+        return response;
+      },
       providesTags: ['Cart'],
     }),
     addToCart: builder.mutation<Cart, UpdateCartItemInput>({
       query: (body) => ({
-        url: '/cart/items',
+        url: '/cart',
         method: 'POST',
         body,
       }),
+      transformResponse: (response: any) => {
+        if (!response) return response;
+        if (response.data) return response.data;
+        return response;
+      },
       invalidatesTags: ['Cart'],
     }),
     updateCartItem: builder.mutation<Cart, { id: string; body: { quantity: number } }>({
