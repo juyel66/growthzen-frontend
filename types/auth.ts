@@ -1,10 +1,24 @@
+export type UserRole =
+  | 'CUSTOMER'
+  | 'RESELLER'
+  | 'ADMIN'
+  | 'SUPER_ADMIN'
+  | 'admin'
+  | 'user'
+  | 'seller'
+  | 'reseller';
+
 export interface User {
   id: string;
   email: string;
   name?: string;
-  role: 'admin' | 'user' | 'seller';
-  createdAt: string;
-  updatedAt: string;
+  phone?: string;
+  role: UserRole;
+  isVerified?: boolean;
+  isActive?: boolean;
+  profile?: Record<string, unknown> | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AuthState {
@@ -12,16 +26,60 @@ export interface AuthState {
   refreshToken: string | null;
   user: User | null;
   isAuthenticated: boolean;
+  isInitialized: boolean;
 }
 
-export interface LoginCredentials {
+export interface RegisterInput {
+  name: string;
   email: string;
-  otp?: string;
-  password?: string;
+  password: string;
+  phone?: string;
 }
 
-export interface AuthResponse {
-  token: string;
-  refreshToken: string;
-  user: User;
+export interface LoginInput {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
 }
+
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface VerifyOtpInput {
+  email: string;
+  otp: string;
+}
+
+export interface ResetPasswordInput {
+  email: string;
+  otp: string;
+  newPassword: string;
+}
+
+export interface ChangePasswordInput {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface RefreshTokenInput {
+  refreshToken: string;
+}
+
+export interface AuthResponseData {
+  user: User;
+  accessToken?: string;
+  refreshToken?: string;
+  token?: string;
+}
+
+export interface ApiResponse<T = unknown> {
+  statusCode?: number;
+  success: boolean;
+  message: string;
+  data?: T;
+}
+
+// Backward compatibility alias
+export type LoginCredentials = LoginInput;
+export type AuthResponse = AuthResponseData;
