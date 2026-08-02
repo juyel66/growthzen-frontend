@@ -20,10 +20,10 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      transformResponse: (response: any) => {
-        if (!response) return response;
-        if (response.data) return response.data;
-        return response;
+      transformResponse: (response: { data?: User } | User) => {
+        if (!response) return response as User;
+        if ('data' in response && response.data) return response.data;
+        return response as User;
       },
     }),
 
@@ -37,10 +37,10 @@ export const authApi = baseApi.injectEndpoints({
           password: body.password,
         },
       }),
-      transformResponse: (response: any) => {
-        if (!response) return response;
-        if (response.data) return response.data;
-        return response;
+      transformResponse: (response: { data?: AuthResponseData } | AuthResponseData) => {
+        if (!response) return response as AuthResponseData;
+        if ('data' in response && response.data) return response.data;
+        return response as AuthResponseData;
       },
       invalidatesTags: ['Auth'],
     }),
@@ -48,10 +48,10 @@ export const authApi = baseApi.injectEndpoints({
     // GET /auth/me
     getMe: builder.query<User, void>({
       query: () => '/auth/me',
-      transformResponse: (response: any) => {
-        if (!response) return response;
-        if (response.data) return response.data;
-        return response;
+      transformResponse: (response: { data?: User } | User) => {
+        if (!response) return response as User;
+        if ('data' in response && response.data) return response.data;
+        return response as User;
       },
       providesTags: ['Auth'],
     }),
@@ -93,16 +93,16 @@ export const authApi = baseApi.injectEndpoints({
     }),
 
     // POST /auth/refresh-token
-    refreshToken: builder.mutation<AuthResponseData, RefreshTokenInput>({
+    refreshToken: builder.mutation<AuthResponseData, RefreshTokenInput | void>({
       query: (body) => ({
         url: '/auth/refresh-token',
         method: 'POST',
-        body,
+        body: body || {},
       }),
-      transformResponse: (response: any) => {
-        if (!response) return response;
-        if (response.data) return response.data;
-        return response;
+      transformResponse: (response: { data?: AuthResponseData } | AuthResponseData) => {
+        if (!response) return response as AuthResponseData;
+        if ('data' in response && response.data) return response.data;
+        return response as AuthResponseData;
       },
     }),
 
