@@ -20,15 +20,15 @@ const baseQuery = fetchBaseQuery({
   },
 });
 
-// A mutex-like queue mechanism to hold concurrent requests during a token refresh
+// Mutex queue mechanism to hold concurrent requests during a token refresh
 let isRefreshing = false;
-let refreshSubscribers: ((token: string) => void)[] = [];
+let refreshSubscribers: ((token: string | null) => void)[] = [];
 
-const subscribeTokenRefresh = (cb: (token: string) => void) => {
+const subscribeTokenRefresh = (cb: (token: string | null) => void) => {
   refreshSubscribers.push(cb);
 };
 
-const onTokenRefreshed = (token: string) => {
+const onTokenRefreshed = (token: string | null) => {
   refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
 };
@@ -41,63 +41,75 @@ export const baseQueryWithReauth: BaseQueryFn<
   let result = await baseQuery(args, api, extraOptions);
 
   if (result.error && result.error.status === 401) {
-    // If we're already refreshing, queue this request
+    // Avoid infinite refresh loops if the failing request IS the refresh token call itself
+    const urlString = typeof args === 'string' ? args : args.url;
+    if (urlString.includes('/auth/refresh-token') || urlString.includes('/auth/login')) {
+      return result;
+    }
+
+    // If we're already refreshing, queue concurrent requests
     if (isRefreshing) {
       return new Promise((resolve) => {
         subscribeTokenRefresh((token) => {
-          // Retry the request with the new token
-          resolve(baseQuery(args, api, extraOptions));
+          if (token) {
+            resolve(baseQuery(args, api, extraOptions));
+          } else {
+            resolve(result);
+          }
         });
       });
     }
 
     const state = api.getState() as RootState;
-    const refreshToken = state.auth?.refreshToken;
+    const refreshTokenValue = state.auth?.refreshToken;
 
-    if (refreshToken) {
-      isRefreshing = true;
+    isRefreshing = true;
 
-      try {
-        // Direct fetch call to refresh token endpoint to avoid recursion
-        const refreshResult = await fetch(`${baseUrl}/auth/refresh`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ refreshToken }),
-        });
+    try {
+      // POST /auth/refresh-token endpoint
+      const refreshResult = await fetch(`${baseUrl}/auth/refresh-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken: refreshTokenValue || '' }),
+      });
 
-        if (refreshResult.ok) {
-          const data = await refreshResult.json();
-          const newAccessToken = data.token || data.accessToken;
-          const newRefreshToken = data.refreshToken;
+      if (refreshResult.ok) {
+        const data = await refreshResult.json();
+        const payload = data?.data || data;
+        const newAccessToken = payload?.accessToken || payload?.token;
+        const newRefreshToken = payload?.refreshToken || refreshTokenValue;
 
-          // Dispatch updated credentials
+        if (newAccessToken) {
+          // Dispatch updated token
           api.dispatch(
             updateToken({
               token: newAccessToken,
+              refreshToken: newRefreshToken,
             })
           );
 
-          // Trigger all waiting subscribers
+          // Trigger waiting subscribers
           onTokenRefreshed(newAccessToken);
           isRefreshing = false;
 
-          // Retry the failed query
+          // Retry the failed request transparently
           result = await baseQuery(args, api, extraOptions);
         } else {
-          // Refresh failed - log user out
+          onTokenRefreshed(null);
           api.dispatch(logOut());
           isRefreshing = false;
         }
-      } catch (error) {
-        // Network/parsing errors - log user out
+      } else {
+        onTokenRefreshed(null);
         api.dispatch(logOut());
         isRefreshing = false;
       }
-    } else {
-      // No refresh token available - log user out
+    } catch {
+      onTokenRefreshed(null);
       api.dispatch(logOut());
+      isRefreshing = false;
     }
   }
 
