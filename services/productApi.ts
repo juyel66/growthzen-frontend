@@ -28,7 +28,7 @@ export const productApi = baseApi.injectEndpoints({
       },
       providesTags: (result, error, id) => [{ type: 'Products', id }],
     }),
-    createProduct: builder.mutation<Product, Partial<Product>>({
+    createProduct: builder.mutation<Product, FormData | Partial<Product>>({
       query: (body) => ({
         url: '/products',
         method: 'POST',
@@ -36,7 +36,7 @@ export const productApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Products'],
     }),
-    updateProduct: builder.mutation<Product, { id: string; body: Partial<Product> }>({
+    updateProduct: builder.mutation<Product, { id: string; body: FormData | Partial<Product> }>({
       query: ({ id, body }) => ({
         url: `/products/${id}`,
         method: 'PATCH',
