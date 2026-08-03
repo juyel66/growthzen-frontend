@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -12,8 +12,13 @@ import {
 } from '@/types/product';
 import ProductPrice from './ProductPrice';
 import ProductQuickViewModal from './ProductQuickViewModal';
-import { Star, Heart, Eye, ShoppingCart, Sparkles, Loader2 } from 'lucide-react';
-import { useAddToCartMutation } from '@/services/cartApi';
+import WishlistButton from './WishlistButton';
+import { Star, Eye, ShoppingCart, Sparkles, Loader2 } from 'lucide-react';
+import { useAddToCartMutation, useGetCartQuery } from '@/services/cartApi';
+import CartQuantitySelector from '@/components/cart/CartQuantitySelector';
+import { useAppSelector } from '@/redux/hooks';
+import { selectIsAuthenticated } from '@/features/auth/authSlice';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
 import Swal from 'sweetalert2';
 
 interface ProductCardProps {
@@ -23,10 +28,15 @@ interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) => {
   const router = useRouter();
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const { executeProtectedAction } = useProtectedAction();
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { data: cartData } = useGetCartQuery(undefined, { skip: !isAuthenticated });
+  const cartItem = cartData?.items?.find(
+    (item) => item.productId === product.id || item.product?.id === product.id
+  );
 
   const title = getProductTitle(product);
   const categoryName = getProductCategoryName(product);
@@ -39,27 +49,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
   const productUrl = `/products/${productSlug}`;
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Navigate to product details unless clicking an interactive button
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('a')) {
       return;
     }
     router.push(productUrl);
-  };
-
-  const handleWishlistClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const nextState = !isWishlisted;
-    setIsWishlisted(nextState);
-    Swal.fire({
-      icon: 'success',
-      title: nextState ? 'Added to Wishlist' : 'Removed from Wishlist',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 1500,
-    });
   };
 
   const handleQuickViewClick = (e: React.MouseEvent) => {
@@ -68,10 +62,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
     setIsQuickViewOpen(true);
   };
 
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
+  const performAddToCart = async () => {
     if (isAdding) return;
 
     try {
@@ -89,7 +80,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
         showConfirmButton: false,
         timer: 2500,
       });
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as { status?: number; data?: { message?: string } };
       const status = error?.status;
       const errorMessage =
         error?.data?.message ||
@@ -111,10 +103,44 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
     }
   };
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    executeProtectedAction(
+      {
+        action: 'add_to_cart',
+        productId: product.id,
+        quantity: 1,
+        returnUrl: productUrl,
+      },
+      performAddToCart
+    );
+  };
+
   const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    router.push(productUrl);
+
+    executeProtectedAction(
+      {
+        action: 'buy_now',
+        productId: product.id,
+        quantity: 1,
+        returnUrl: productUrl,
+      },
+      async () => {
+        try {
+          await addToCart({
+            productId: product.id,
+            quantity: 1,
+          }).unwrap();
+          router.push('/checkout');
+        } catch {
+          router.push('/cart');
+        }
+      }
+    );
   };
 
   return (
@@ -126,13 +152,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
         {/* Top Image Container */}
         <div className="relative w-full aspect-square bg-slate-50 dark:bg-slate-950 overflow-hidden">
           <Link href={productUrl} className="block w-full h-full">
-            <Image
+            <SafeImage
               src={mainImage}
               alt={title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
               className="object-contain p-4 transition-transform duration-500 group-hover:scale-108"
-              unoptimized={mainImage.startsWith('http') && !mainImage.includes('cloudinary') && !mainImage.includes('unsplash')}
             />
           </Link>
 
@@ -148,17 +173,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
           {/* Top-Right Action Floating Buttons */}
           <div className="absolute top-3 right-3 flex flex-col gap-2 z-10">
             {/* Wishlist Button */}
-            <button
-              type="button"
-              onClick={handleWishlistClick}
-              className={`w-9 h-9 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-md flex items-center justify-center transition-transform hover:scale-110 cursor-pointer ${
-                isWishlisted ? 'text-rose-500' : 'text-slate-600 dark:text-slate-300 hover:text-rose-500'
-              }`}
-              title="Add to Wishlist"
-              aria-label="Wishlist"
-            >
-              <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-500' : ''}`} />
-            </button>
+            <WishlistButton productId={product.id} productTitle={title} />
 
             {/* Quick View Button */}
             <button
@@ -205,19 +220,31 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
             <ProductPrice product={product} size="md" />
 
             <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={handleAddToCart}
-                disabled={isAdding}
-                className="h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                {isAdding ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <ShoppingCart className="w-3.5 h-3.5" />
-                )}
-                {isAdding ? 'Adding...' : 'Add To Cart'}
-              </button>
+              {cartItem ? (
+                <div onClick={(e) => e.stopPropagation()} className="w-full flex items-center justify-center">
+                  <CartQuantitySelector
+                    itemId={cartItem.id}
+                    currentQuantity={cartItem.quantity}
+                    maxQuantity={product.quantity}
+                    size="sm"
+                    className="w-full justify-between"
+                  />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={isAdding}
+                  className="h-9 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  {isAdding ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                  )}
+                  {isAdding ? 'Adding...' : 'Add To Cart'}
+                </button>
+              )}
 
               <button
                 type="button"
