@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import { Category } from '@/types/category';
 import { FolderTree, Tag, Eye, Edit3, Trash2, ChevronLeft, ChevronRight, Layers, Percent, Home, Sparkles } from 'lucide-react';
 
