@@ -6,6 +6,8 @@ import { useAppSelector } from '@/redux/hooks';
 import { UserRole } from '@/types/auth';
 import SessionRestoreLoader from './SessionRestoreLoader';
 
+import { getPendingRedirectUrl, sanitizeRedirectUrl } from '@/hooks/useProtectedAction';
+
 export function getRoleDashboardPath(role?: UserRole | string | null): string {
   if (!role) return '/user-dashboard/dashboard';
 
@@ -30,8 +32,19 @@ export const GuestGuard: React.FC<GuardProps> = ({ children }) => {
 
   useEffect(() => {
     if (isInitialized && !isRestoring && isAuthenticated && user) {
-      const redirectPath = getRoleDashboardPath(user.role);
-      router.replace(redirectPath);
+      // Check for pending return URL in sessionStorage or URL search query first
+      const pendingUrl = getPendingRedirectUrl();
+      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+      const redirectParam = searchParams?.get('redirect');
+
+      const target = pendingUrl || (redirectParam ? sanitizeRedirectUrl(redirectParam) : null);
+
+      if (target) {
+        router.replace(target);
+      } else {
+        const fallback = getRoleDashboardPath(user.role);
+        router.replace(fallback);
+      }
     }
   }, [isAuthenticated, isInitialized, isRestoring, router, user]);
 
