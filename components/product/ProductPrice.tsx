@@ -25,7 +25,7 @@ export const ProductPrice: React.FC<ProductPriceProps> = ({
   const originalPrice = getProductOriginalPrice(product);
   const discountAmount = getProductDiscountAmount(product);
 
-  const isDiscounted = discountAmount > 0 || originalPrice > finalPrice;
+  const isDiscounted = Boolean(product.discountEnabled) && (discountAmount > 0 || originalPrice > finalPrice);
   const hasResellerPrice = isReseller && product.resellerPrice !== undefined && product.resellerPrice !== null;
 
   // Typography scaling
