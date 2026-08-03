@@ -159,13 +159,12 @@ function AdminProductsContent() {
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
                           <div className="relative w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200/80 dark:border-slate-700 flex-shrink-0">
-                            <Image
+                            <SafeImage
                               src={mainImg}
                               alt={title}
                               fill
                               sizes="48px"
                               className="object-cover"
-                              unoptimized
                             />
                           </div>
                           <div className="flex flex-col">
