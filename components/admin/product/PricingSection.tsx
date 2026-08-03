@@ -12,20 +12,34 @@ interface PricingSectionProps {
 }
 
 export const PricingSection: React.FC<PricingSectionProps> = ({ register, errors, watch }) => {
-  const customerSellPrice = Number(watch('customerSellPrice')) || 0;
+  const specialSaleEnabled = watch('specialSaleEnabled');
+  const discountEnabled = watch('discountEnabled');
+
+  const rawCustomerSellPrice = watch('customerSellPrice');
+  const customerSellPrice = (rawCustomerSellPrice as any) === '' || rawCustomerSellPrice === null || rawCustomerSellPrice === undefined ? 0 : Number(rawCustomerSellPrice);
+
+  const rawSalePrice = watch('salePrice');
+  const salePrice = (rawSalePrice as any) === '' || rawSalePrice === null || rawSalePrice === undefined ? 0 : Number(rawSalePrice);
+
   const discountType = watch('discountType');
-  const discountValue = Number(watch('discountValue')) || 0;
-  const taxRate = Number(watch('taxRate')) || 0;
+  const rawDiscountValue = watch('discountValue');
+  const discountValue = (rawDiscountValue as any) === '' || rawDiscountValue === null || rawDiscountValue === undefined ? 0 : Number(rawDiscountValue);
+
+  const rawTaxRate = watch('taxRate');
+  const taxRate = (rawTaxRate as any) === '' || rawTaxRate === null || rawTaxRate === undefined ? 0 : Number(rawTaxRate);
 
   // Live calculation preview
+  const baseEffectivePrice = specialSaleEnabled && salePrice > 0 ? salePrice : customerSellPrice;
   let calculatedDiscount = 0;
-  if (discountType === 'PERCENTAGE' && discountValue > 0) {
-    calculatedDiscount = (customerSellPrice * discountValue) / 100;
-  } else if (discountType === 'FIXED' && discountValue > 0) {
-    calculatedDiscount = discountValue;
+  if (discountEnabled) {
+    if (discountType === 'PERCENTAGE' && discountValue > 0) {
+      calculatedDiscount = (baseEffectivePrice * discountValue) / 100;
+    } else if (discountType === 'FIXED' && discountValue > 0) {
+      calculatedDiscount = discountValue;
+    }
   }
 
-  const finalCalculatedPrice = Math.max(0, customerSellPrice - calculatedDiscount);
+  const finalCalculatedPrice = Math.max(0, baseEffectivePrice - calculatedDiscount);
   const taxAmount = (finalCalculatedPrice * taxRate) / 100;
   const totalPriceWithTax = finalCalculatedPrice + taxAmount;
 
@@ -38,7 +52,7 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ register, errors
         </div>
 
         {/* Live Calculation Preview Badge */}
-        {customerSellPrice > 0 && (
+        {baseEffectivePrice > 0 && (
           <div className="flex items-center gap-2 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300">
             <Calculator className="w-3.5 h-3.5" />
             Final Preview: ${finalCalculatedPrice.toFixed(2)}
@@ -108,42 +122,78 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ register, errors
           {errors.resellerPrice && <span className="text-xs text-rose-500">{errors.resellerPrice.message}</span>}
         </div>
 
-        {/* Sale Price (Optional Override) */}
-        <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Special Sale Price ($) (Optional)
+        {/* Checkbox: Enable Special Sale */}
+        <div className="flex items-center gap-3 py-2 px-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl md:col-span-3">
+          <input
+            type="checkbox"
+            id="enable-special-sale"
+            {...register('specialSaleEnabled')}
+            className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
+          />
+          <label htmlFor="enable-special-sale" className="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+            Enable Special Sale Price
           </label>
-          <div className="relative">
-            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
-            <input
-              type="number"
-              step="0.01"
-              {...register('salePrice')}
-              placeholder="Leave empty if none"
-              className="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
-            />
+          <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+            (When enabled, Special Sale Price overrides Customer Sell Price in product listing preview)
+          </span>
+        </div>
+
+        {/* Special Sale Price (Conditionally Rendered) */}
+        {specialSaleEnabled && (
+          <div className="flex flex-col gap-1.5 md:col-span-3">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Special Sale Price ($)
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold">$</span>
+              <input
+                type="number"
+                step="0.01"
+                {...register('salePrice')}
+                placeholder="Enter special sale price"
+                className="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              />
+            </div>
+            {errors.salePrice && <span className="text-xs text-rose-500">{errors.salePrice.message}</span>}
           </div>
+        )}
+
+        {/* Checkbox: Enable Product Discount */}
+        <div className="flex items-center gap-3 py-2 px-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-xl md:col-span-3">
+          <input
+            type="checkbox"
+            id="enable-product-discount"
+            {...register('discountEnabled')}
+            className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
+          />
+          <label htmlFor="enable-product-discount" className="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+            Enable Product Discount
+          </label>
+          <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+            (Check to configure Percentage or Fixed Amount discount for this product)
+          </span>
         </div>
 
         {/* Discount Type */}
-        <div className="flex flex-col gap-1.5">
+        <div className={`flex flex-col gap-1.5 transition-opacity ${!discountEnabled ? 'opacity-40' : ''}`}>
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Discount Type
+            Discount Type (Optional)
           </label>
           <select
             {...register('discountType')}
-            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+            disabled={!discountEnabled}
+            className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition cursor-pointer disabled:cursor-not-allowed"
           >
-            <option value="">No Discount</option>
+            <option value="">Select Discount Type (Optional)</option>
             <option value="PERCENTAGE">Percentage (%)</option>
             <option value="FIXED">Fixed Amount ($)</option>
           </select>
         </div>
 
         {/* Discount Value */}
-        <div className="flex flex-col gap-1.5">
+        <div className={`flex flex-col gap-1.5 transition-opacity ${!discountEnabled ? 'opacity-40' : ''}`}>
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Discount Value
+            Discount Value (Optional)
           </label>
           <div className="relative">
             {discountType === 'PERCENTAGE' ? (
@@ -155,9 +205,9 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ register, errors
               type="number"
               step="0.01"
               {...register('discountValue')}
-              disabled={!discountType}
-              placeholder={discountType === 'PERCENTAGE' ? 'e.g. 15' : 'e.g. 10.00'}
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition"
+              disabled={!discountEnabled}
+              placeholder={discountType === 'PERCENTAGE' ? 'e.g. 15' : 'e.g. 10.00 (Optional)'}
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition disabled:cursor-not-allowed"
             />
           </div>
           {errors.discountValue && <span className="text-xs text-rose-500">{errors.discountValue.message}</span>}
