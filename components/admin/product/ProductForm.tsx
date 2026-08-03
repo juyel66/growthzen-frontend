@@ -60,31 +60,43 @@ export function mapProductToFormValues(prod: Product): ProductFormValues {
     }
   });
 
-  return {
-    title: getProductTitle(prod),
-    shortDescription: prod.shortDescription || '',
-    description: prod.description || '',
-    categoryId: catId,
-    productCode: prod.productCode || prod.sku || '',
-    barcode: prod.barcode || '',
-    costPrice: prod.costPrice ?? 0,
-    customerSellPrice: prod.customerSellPrice ?? prod.price ?? 0,
-    resellerPrice: prod.resellerPrice ?? 0,
-    salePrice: prod.salePrice !== undefined && prod.salePrice !== null ? Number(prod.salePrice) : null,
-    discountType: (prod.discountType as 'PERCENTAGE' | 'FIXED') || null,
-    discountValue: prod.discountValue !== undefined && prod.discountValue !== null ? Number(prod.discountValue) : null,
-    taxRate: prod.taxRate !== undefined && prod.taxRate !== null ? Number(prod.taxRate) : null,
-    couponCode: prod.couponCode || '',
-    attributes: Array.isArray(prod.attributes) ? prod.attributes : [],
-    enableSize: Boolean(prod.enableSize),
-    availableSizes: Array.isArray(prod.availableSizes) ? prod.availableSizes : [],
-    status: (prod.status as 'ACTIVE' | 'INACTIVE' | 'DRAFT') || 'ACTIVE',
-    thumbnailImage,
-    productImages: rawGallery,
-    productVideos: Array.isArray(prod.productVideos) ? prod.productVideos : [],
-    isFeatured: Boolean(prod.isFeatured),
-  };
-}
+    const specialSaleEnabled = Boolean(
+      prod.specialSaleEnabled ??
+        (prod.salePrice !== undefined && prod.salePrice !== null && Number(prod.salePrice) > 0)
+    );
+
+    const discountEnabled = Boolean(
+      prod.discountEnabled ??
+        (prod.discountValue !== undefined && prod.discountValue !== null && Number(prod.discountValue) > 0)
+    );
+
+    return {
+      title: getProductTitle(prod),
+      shortDescription: prod.shortDescription || '',
+      description: prod.description || '',
+      categoryId: catId,
+      productCode: prod.productCode || prod.sku || '',
+      barcode: prod.barcode || '',
+      costPrice: prod.costPrice !== undefined && prod.costPrice !== null ? (prod.costPrice as any) : '',
+      customerSellPrice: prod.customerSellPrice !== undefined && prod.customerSellPrice !== null ? (prod.customerSellPrice as any) : prod.price !== undefined && prod.price !== null ? (prod.price as any) : '',
+      resellerPrice: prod.resellerPrice !== undefined && prod.resellerPrice !== null ? (prod.resellerPrice as any) : '',
+      specialSaleEnabled,
+      salePrice: specialSaleEnabled && prod.salePrice !== undefined && prod.salePrice !== null ? (prod.salePrice as any) : null,
+      discountEnabled,
+      discountType: (prod.discountType as any) || null,
+      discountValue: prod.discountValue !== undefined && prod.discountValue !== null ? (prod.discountValue as any) : null,
+      taxRate: prod.taxRate !== undefined && prod.taxRate !== null ? (prod.taxRate as any) : null,
+      couponCode: prod.couponCode || null,
+      attributes: Array.isArray(prod.attributes) ? prod.attributes : [],
+      enableSize: Boolean(prod.enableSize),
+      availableSizes: Array.isArray(prod.availableSizes) ? prod.availableSizes : [],
+      status: (prod.status as 'ACTIVE' | 'INACTIVE' | 'DRAFT') || 'ACTIVE',
+      thumbnailImage,
+      productImages: rawGallery,
+      productVideos: Array.isArray(prod.productVideos) ? prod.productVideos : [],
+      isFeatured: Boolean(prod.isFeatured),
+    };
+  }
 
 interface ProductFormProps {
   productId?: string;
@@ -129,14 +141,16 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
       categoryId: '',
       productCode: '',
       barcode: '',
-      costPrice: 0,
-      customerSellPrice: 0,
-      resellerPrice: 0,
-      salePrice: null,
-      discountType: null,
-      discountValue: null,
-      taxRate: null,
-      couponCode: '',
+      costPrice: '' as any,
+      customerSellPrice: '' as any,
+      resellerPrice: '' as any,
+      specialSaleEnabled: false,
+      salePrice: null as any,
+      discountEnabled: false,
+      discountType: null as any,
+      discountValue: null as any,
+      taxRate: null as any,
+      couponCode: null as any,
       attributes: [],
       enableSize: false,
       availableSizes: [],
@@ -174,59 +188,70 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
-      const hasDiscount = Boolean(
-        data.discountType &&
-          data.discountValue !== null &&
-          data.discountValue !== undefined &&
-          Number(data.discountValue) > 0
-      );
-      const discountType = hasDiscount ? data.discountType : null;
-      const discountValue = hasDiscount ? Number(data.discountValue) : null;
+      const parseOptionalNumber = (val: any) =>
+        val === '' || val === null || val === undefined ? null : Number(val);
 
-      const salePrice =
-        data.salePrice !== null &&
-        data.salePrice !== undefined &&
-        (data.salePrice as unknown as string) !== '' &&
-        Number(data.salePrice) > 0
-          ? Number(data.salePrice)
-          : null;
+      const discountType = data.discountType && String(data.discountType).trim() ? String(data.discountType).trim() : null;
+      const discountValue = parseOptionalNumber(data.discountValue);
+      const salePrice = data.specialSaleEnabled ? parseOptionalNumber(data.salePrice) : null;
+      const taxRate = parseOptionalNumber(data.taxRate);
+      const couponCode = data.couponCode && String(data.couponCode).trim() ? String(data.couponCode).trim() : null;
 
-      const taxRate =
-        data.taxRate !== null &&
-        data.taxRate !== undefined &&
-        (data.taxRate as unknown as string) !== '' &&
-        Number(data.taxRate) >= 0
-          ? Number(data.taxRate)
-          : null;
+      // Construct FormData for multipart/form-data submission
+      const formData = new FormData();
+      formData.append('title', data.title);
+      formData.append('shortDescription', data.shortDescription);
+      formData.append('description', data.description);
+      formData.append('categoryId', data.categoryId);
+      formData.append('productCode', data.productCode);
+      if (data.barcode?.trim()) formData.append('barcode', data.barcode.trim());
 
-      // Build clean payload according to backend API specification
-      const payload: any = {
-        title: data.title,
-        shortDescription: data.shortDescription,
-        description: data.description,
-        categoryId: data.categoryId,
-        productCode: data.productCode,
-        barcode: data.barcode?.trim() ? data.barcode.trim() : null,
-        costPrice: Number(data.costPrice),
-        customerSellPrice: Number(data.customerSellPrice),
-        resellerPrice: Number(data.resellerPrice),
-        salePrice,
-        discountType,
-        discountValue,
-        taxRate,
-        couponCode: data.couponCode?.trim() ? data.couponCode.trim() : null,
-        attributes: data.attributes && data.attributes.length > 0 ? data.attributes : [],
-        enableSize: Boolean(data.enableSize),
-        availableSizes: data.enableSize && data.availableSizes ? data.availableSizes : [],
-        status: data.status || 'ACTIVE',
-        thumbnailImage: data.thumbnailImage,
-        productImages: data.productImages && data.productImages.length > 0 ? data.productImages : [],
-        productVideos: data.productVideos && data.productVideos.length > 0 ? data.productVideos : [],
-        isFeatured: Boolean(data.isFeatured),
-      };
+      formData.append('costPrice', String(Number(data.costPrice)));
+      formData.append('customerSellPrice', String(Number(data.customerSellPrice)));
+      formData.append('resellerPrice', String(Number(data.resellerPrice)));
+
+      formData.append('specialSaleEnabled', String(Boolean(data.specialSaleEnabled)));
+      formData.append('discountEnabled', String(Boolean(data.discountEnabled)));
+      if (salePrice !== null) formData.append('salePrice', String(salePrice));
+      if (discountType !== null) formData.append('discountType', discountType);
+      if (discountValue !== null) formData.append('discountValue', String(discountValue));
+      if (taxRate !== null) formData.append('taxRate', String(taxRate));
+      if (couponCode !== null) formData.append('couponCode', couponCode);
+
+      formData.append('status', data.status || 'ACTIVE');
+      formData.append('isFeatured', String(Boolean(data.isFeatured)));
+      formData.append('enableSize', String(Boolean(data.enableSize)));
+
+      if (data.attributes && data.attributes.length > 0) {
+        formData.append('attributes', JSON.stringify(data.attributes));
+      }
+      if (data.enableSize && data.availableSizes && data.availableSizes.length > 0) {
+        formData.append('availableSizes', JSON.stringify(data.availableSizes));
+      }
+      if (data.productVideos && data.productVideos.length > 0) {
+        formData.append('productVideos', JSON.stringify(data.productVideos));
+      }
+
+      // Append single thumbnail file if user selected a new File object
+      if (data.thumbnailImage instanceof File) {
+        formData.append('thumbnailImage', data.thumbnailImage);
+      } else if (!isEdit && typeof data.thumbnailImage === 'string' && data.thumbnailImage) {
+        formData.append('thumbnailImage', data.thumbnailImage);
+      }
+
+      // Append gallery image File objects
+      if (Array.isArray(data.productImages)) {
+        data.productImages.forEach((imgItem: any) => {
+          if (imgItem instanceof File) {
+            formData.append('productImages', imgItem);
+          } else if (!isEdit && typeof imgItem === 'string' && imgItem) {
+            formData.append('productImages', imgItem);
+          }
+        });
+      }
 
       if (isEdit && productId) {
-        const updatedProduct = await updateProduct({ id: productId, body: payload }).unwrap();
+        const updatedProduct = await updateProduct({ id: productId, body: formData }).unwrap();
 
         if (updatedProduct) {
           reset(mapProductToFormValues(updatedProduct));
@@ -242,7 +267,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
           router.push('/admin-dashboard/products');
         });
       } else {
-        await createProduct(payload).unwrap();
+        await createProduct(formData).unwrap();
 
         Swal.fire({
           icon: 'success',
