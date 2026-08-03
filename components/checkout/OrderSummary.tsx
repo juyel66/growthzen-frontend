@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
 import { CartItem } from '@/types/cart';
 import { getProductTitle, getProductMainImage } from '@/types/product';
@@ -61,23 +61,21 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
               <div className="relative w-14 h-14 rounded-xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shrink-0 overflow-hidden">
                 {productSlug ? (
                   <Link href={`/products/${productSlug}`}>
-                    <Image
+                    <SafeImage
                       src={image}
                       alt={title}
                       fill
                       sizes="56px"
                       className="object-contain p-1"
-                      unoptimized={image.startsWith('http') && !image.includes('cloudinary') && !image.includes('unsplash')}
                     />
                   </Link>
                 ) : (
-                  <Image
+                  <SafeImage
                     src={image}
                     alt={title}
                     fill
                     sizes="56px"
                     className="object-contain p-1"
-                    unoptimized={image.startsWith('http') && !image.includes('cloudinary') && !image.includes('unsplash')}
                   />
                 )}
               </div>
