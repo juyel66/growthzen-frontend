@@ -9,7 +9,7 @@ import { useGetCategoriesQuery, useCreateCategoryMutation, useUpdateCategoryMuta
 import { Button } from '@/components/ui/button';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, FolderTree, Layers, Percent, Sparkles, Image as ImageIcon, Globe, CheckCircle2 } from 'lucide-react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import Swal from 'sweetalert2';
 
 interface CategoryModalProps {
@@ -288,7 +288,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                   />
                   {imageUrl && (
                     <div className="relative w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 flex-shrink-0">
-                      <Image src={imageUrl} alt="Category preview" fill sizes="44px" className="object-cover" unoptimized />
+                      <SafeImage src={imageUrl} alt="Category preview" fill sizes="44px" className="object-cover" />
                     </div>
                   )}
                 </div>
