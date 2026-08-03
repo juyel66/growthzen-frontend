@@ -43,6 +43,8 @@ export interface Product {
   finalPrice?: number;
   resellerPrice?: number;
   salePrice?: number | null;
+  specialSaleEnabled?: boolean;
+  discountEnabled?: boolean;
   discountType?: string | null;
   discountValue?: number | null;
   taxRate?: number | null;
@@ -196,6 +198,7 @@ export function getProductOriginalPrice(product: Product): number {
 }
 
 export function getProductDiscountAmount(product: Product): number {
+  if (product.discountEnabled === false) return 0;
   if (product.discountAmount !== undefined && product.discountAmount !== null) return Number(product.discountAmount);
   return 0;
 }
