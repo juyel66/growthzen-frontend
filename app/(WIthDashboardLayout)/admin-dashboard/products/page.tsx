@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import { useGetProductsQuery, useDeleteProductMutation } from '@/services/productApi';
 import { getProductTitle, getProductCategoryName, getProductMainImage, getProductFinalPrice } from '@/types/product';
 import { RoleGuard } from '@/components/auth/AuthGuards';
