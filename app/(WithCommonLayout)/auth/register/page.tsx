@@ -18,8 +18,14 @@ export default function RegisterPage() {
   );
 }
 
+import { useSearchParams } from 'next/navigation';
+import { sanitizeRedirectUrl } from '@/hooks/useProtectedAction';
+
 function RegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
+
   const [registerApi, { isLoading }] = useRegisterMutation();
 
   const [formData, setFormData] = useState({
@@ -74,18 +80,23 @@ function RegisterContent() {
         phone: formData.phone || undefined,
       }).unwrap();
 
+      const targetLoginUrl = redirectParam
+        ? `/auth/login?redirect=${encodeURIComponent(sanitizeRedirectUrl(redirectParam))}`
+        : '/auth/login';
+
       Swal.fire({
         icon: 'success',
         title: 'Registration Successful!',
-        text: 'Your account has been created. Please sign in with your credentials.',
+        text: 'Your account has been created. Please sign in with your credentials to continue your order.',
         confirmButtonText: 'Go to Login',
       }).then(() => {
-        router.push('/auth/login');
+        router.replace(targetLoginUrl);
       });
-    } catch (error: any) {
-      const status = error?.status;
+    } catch (error: unknown) {
+      const err = error as { status?: number; data?: { message?: string } };
+      const status = err?.status;
       const message =
-        error?.data?.message ||
+        err?.data?.message ||
         (status === 409
           ? 'An account with this email address already exists.'
           : status === 422
@@ -251,7 +262,10 @@ function RegisterContent() {
         {/* Footer */}
         <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           Already have an account?{' '}
-          <Link href="/auth/login" className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+          <Link
+            href={redirectParam ? `/auth/login?redirect=${encodeURIComponent(redirectParam)}` : '/auth/login'}
+            className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+          >
             Sign in here
           </Link>
         </div>
