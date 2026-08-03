@@ -8,6 +8,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '@/hooks/useTheme';
 import { dummyCategories } from '@/constants/dummyCategories';
 import SearchBox from './SearchBox';
+import { useGetCartQuery } from '@/services/cartApi';
+import { useAppSelector } from '@/redux/hooks';
+import { selectIsAuthenticated } from '@/features/auth/authSlice';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -17,6 +20,15 @@ interface MobileMenuProps {
 export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const theme = useTheme();
   const pathname = usePathname();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { data: cartData } = useGetCartQuery(undefined, { skip: !isAuthenticated });
+  const cartCount = isAuthenticated
+    ? cartData?.summary?.totalQuantity ??
+      cartData?.totalQuantity ??
+      cartData?.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) ??
+      0
+    : 0;
+
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const toggleCategory = (id: string) => {
@@ -94,7 +106,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                   style={{ borderColor: theme.borderColor }}
                 >
                   <ShoppingBag className="w-5 h-5 mb-1" style={{ color: theme.textColor }} />
-                  <span className="text-[10px] font-medium text-slate-500">Cart (5)</span>
+                  <span className="text-[10px] font-medium text-slate-500">Cart ({cartCount})</span>
                 </Link>
                 <Link
                   href="/login"
