@@ -7,7 +7,7 @@ import { useGetProductsQuery, useDeleteProductMutation } from '@/services/produc
 import { getProductTitle, getProductCategoryName, getProductMainImage, getProductFinalPrice } from '@/types/product';
 import { RoleGuard } from '@/components/auth/AuthGuards';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Search, Trash2, Eye, Package, Sparkles, Tag } from 'lucide-react';
+import { PlusCircle, Search, Trash2, Eye, Pencil, Package, Sparkles, Tag } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export default function AdminProductsPage() {
@@ -229,6 +229,15 @@ function AdminProductsContent() {
                               title="View product in storefront"
                             >
                               <Eye className="w-4 h-4" />
+                            </button>
+                          </Link>
+                          <Link href={`/admin-dashboard/products/edit/${p.id}`}>
+                            <button
+                              type="button"
+                              className="p-1.5 text-slate-400 hover:text-amber-600 transition cursor-pointer"
+                              title="Edit product"
+                            >
+                              <Pencil className="w-4 h-4" />
                             </button>
                           </Link>
                           <button
