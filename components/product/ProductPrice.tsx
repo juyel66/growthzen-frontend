@@ -25,7 +25,7 @@ export const ProductPrice: React.FC<ProductPriceProps> = ({
   const originalPrice = getProductOriginalPrice(product);
   const discountAmount = getProductDiscountAmount(product);
 
-  const isDiscounted = (discountAmount > 0 || (originalPrice !== null && originalPrice > finalPrice));
+  const isDiscounted = discountAmount > 0 || originalPrice > finalPrice;
   const hasResellerPrice = isReseller && product.resellerPrice !== undefined && product.resellerPrice !== null;
 
   // Typography scaling
@@ -56,7 +56,7 @@ export const ProductPrice: React.FC<ProductPriceProps> = ({
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span>Customer MSRP: ${finalPrice.toFixed(2)}</span>
-            {originalPrice && originalPrice > finalPrice && (
+            {originalPrice > finalPrice && (
               <span className="line-through text-slate-400">${originalPrice.toFixed(2)}</span>
             )}
           </div>
@@ -70,7 +70,7 @@ export const ProductPrice: React.FC<ProductPriceProps> = ({
           </span>
 
           {/* Original Price (Strikethrough if discounted) */}
-          {isDiscounted && originalPrice && (
+          {isDiscounted && originalPrice > finalPrice && (
             <span className={originalSizeClasses}>
               ${originalPrice.toFixed(2)}
             </span>
@@ -81,7 +81,7 @@ export const ProductPrice: React.FC<ProductPriceProps> = ({
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300">
               {discountAmount > 0
                 ? `-$${discountAmount.toFixed(2)}`
-                : originalPrice
+                : originalPrice > 0
                 ? `${Math.round(((originalPrice - finalPrice) / originalPrice) * 100)}% OFF`
                 : 'SALE'}
             </span>
