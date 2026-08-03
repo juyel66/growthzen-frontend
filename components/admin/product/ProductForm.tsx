@@ -37,6 +37,29 @@ export function mapProductToFormValues(prod: Product): ProductFormValues {
     catId = prod.category;
   }
 
+  const rawThumbnail =
+    (prod.thumbnailImage && typeof prod.thumbnailImage === 'string' && prod.thumbnailImage.trim()) ||
+    (Array.isArray(prod.productImages) && prod.productImages.find((img) => img && typeof img === 'string' && img.trim())) ||
+    (Array.isArray(prod.images) && prod.images.find((img) => img && typeof img === 'string' && img.trim())) ||
+    '';
+
+  const thumbnailImage =
+    rawThumbnail && rawThumbnail !== 'undefined' && rawThumbnail !== 'null' ? rawThumbnail : '';
+
+  const rawGallery: string[] = [];
+  const candidateArrays = [prod.productImages, prod.images];
+  candidateArrays.forEach((arr) => {
+    if (Array.isArray(arr)) {
+      arr.forEach((img) => {
+        if (img && typeof img === 'string' && img.trim() && img !== 'undefined' && img !== 'null') {
+          if (!rawGallery.includes(img)) {
+            rawGallery.push(img);
+          }
+        }
+      });
+    }
+  });
+
   return {
     title: getProductTitle(prod),
     shortDescription: prod.shortDescription || '',
@@ -56,17 +79,8 @@ export function mapProductToFormValues(prod: Product): ProductFormValues {
     enableSize: Boolean(prod.enableSize),
     availableSizes: Array.isArray(prod.availableSizes) ? prod.availableSizes : [],
     status: (prod.status as 'ACTIVE' | 'INACTIVE' | 'DRAFT') || 'ACTIVE',
-    thumbnailImage:
-      prod.thumbnailImage ||
-      (prod.images && prod.images[0]) ||
-      (prod.productImages && prod.productImages[0]) ||
-      '',
-    productImages:
-      Array.isArray(prod.productImages) && prod.productImages.length > 0
-        ? prod.productImages
-        : Array.isArray(prod.images)
-        ? prod.images
-        : [],
+    thumbnailImage,
+    productImages: rawGallery,
     productVideos: Array.isArray(prod.productVideos) ? prod.productVideos : [],
     isFeatured: Boolean(prod.isFeatured),
   };
@@ -136,9 +150,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
 
   useEffect(() => {
     if (isEdit && existingProduct) {
-      reset(mapProductToFormValues(existingProduct));
+      const newFormValues = mapProductToFormValues(existingProduct);
+      const currentThumb = watch('thumbnailImage');
+      const currentGallery = watch('productImages');
+
+      // Preserve valid active images if refetched backend payload returns empty
+      if (!newFormValues.thumbnailImage && currentThumb && currentThumb !== 'undefined' && currentThumb !== 'null') {
+        newFormValues.thumbnailImage = currentThumb;
+      }
+      if (
+        (!newFormValues.productImages || newFormValues.productImages.length === 0) &&
+        Array.isArray(currentGallery) &&
+        currentGallery.length > 0
+      ) {
+        newFormValues.productImages = currentGallery.filter(
+          (img) => img && typeof img === 'string' && img.trim() && img !== 'undefined' && img !== 'null'
+        );
+      }
+
+      reset(newFormValues);
     }
-  }, [isEdit, existingProduct, reset]);
+  }, [isEdit, existingProduct, reset, watch]);
 
   const onSubmit = async (data: ProductFormValues) => {
     try {
