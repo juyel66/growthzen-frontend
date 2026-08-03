@@ -103,13 +103,12 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                     <div className="flex items-center gap-3">
                       <div className="relative w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200/80 dark:border-slate-700 flex-shrink-0">
                         {cat.image ? (
-                          <Image
+                          <SafeImage
                             src={cat.image}
                             alt={cat.name}
                             fill
                             sizes="44px"
                             className="object-cover"
-                            unoptimized
                           />
                         ) : (
                           <FolderTree className="w-5 h-5 text-slate-400 absolute inset-0 m-auto" />
