@@ -70,13 +70,12 @@ export const CategoryDetailsDrawer: React.FC<CategoryDetailsDrawerProps> = ({
               <div className="flex flex-col items-center text-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-6">
                 <div className="relative w-24 h-24 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200/80 dark:border-slate-700 flex-shrink-0 shadow-xs">
                   {category.image ? (
-                    <Image
+                    <SafeImage
                       src={category.image}
                       alt={category.name}
                       fill
                       sizes="96px"
                       className="object-cover"
-                      unoptimized
                     />
                   ) : (
                     <FolderTree className="w-10 h-10 text-slate-400 absolute inset-0 m-auto" />
