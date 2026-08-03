@@ -4,9 +4,13 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/types/product';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/hooks/useTheme';
-import { ShoppingCart, Zap, Heart, Share2, Plus, Minus, Check, Loader2 } from 'lucide-react';
-import { useAddToCartMutation } from '@/services/cartApi';
+import WishlistButton from './WishlistButton';
+import { ShoppingCart, Zap, Share2, Plus, Minus, Check, Trash2, Loader2 } from 'lucide-react';
+import { useAddToCartMutation, useGetCartQuery, useRemoveCartItemMutation } from '@/services/cartApi';
+import CartQuantitySelector from '@/components/cart/CartQuantitySelector';
+import { useAppSelector } from '@/redux/hooks';
+import { selectIsAuthenticated } from '@/features/auth/authSlice';
+import { useProtectedAction } from '@/hooks/useProtectedAction';
 import Swal from 'sweetalert2';
 
 interface ProductActionsProps {
@@ -14,10 +18,16 @@ interface ProductActionsProps {
 }
 
 export const ProductActions: React.FC<ProductActionsProps> = ({ product }) => {
-  const theme = useTheme();
   const router = useRouter();
+  const { executeProtectedAction, usePendingActionEffect } = useProtectedAction();
 
   const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+  const [removeCartItem, { isLoading: isRemoving }] = useRemoveCartItemMutation();
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const { data: cartData } = useGetCartQuery(undefined, { skip: !isAuthenticated });
+  const cartItem = cartData?.items?.find(
+    (item) => item.productId === product.id || item.product?.id === product.id
+  );
 
   const [selectedSize, setSelectedSize] = useState<string | null>(
     product.enableSize && product.availableSizes && product.availableSizes.length > 0
@@ -25,13 +35,48 @@ export const ProductActions: React.FC<ProductActionsProps> = ({ product }) => {
       : null
   );
   const [quantity, setQuantity] = useState<number>(1);
-  const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
 
   const showSizes = Boolean(product.enableSize && product.availableSizes && product.availableSizes.length > 0);
   const productSlug = product.slug || product.id;
-  const productUrl = `/products/${productSlug}`;
 
-  const handleAddToCart = async () => {
+  // 1. Auto-restore state & continue action upon returning post-login/register
+  usePendingActionEffect(product.id, async (pendingPayload) => {
+    const qtyToUse = pendingPayload.quantity || quantity;
+    if (pendingPayload.quantity) setQuantity(pendingPayload.quantity);
+    if (pendingPayload.selectedSize) setSelectedSize(pendingPayload.selectedSize);
+
+    if (pendingPayload.action === 'buy_now') {
+      try {
+        await addToCart({
+          productId: product.id,
+          quantity: qtyToUse,
+        }).unwrap();
+        router.push('/checkout');
+      } catch {
+        router.push('/cart');
+      }
+    } else if (pendingPayload.action === 'add_to_cart') {
+      try {
+        await addToCart({
+          productId: product.id,
+          quantity: qtyToUse,
+        }).unwrap();
+        Swal.fire({
+          icon: 'success',
+          title: 'Added to Cart!',
+          text: `${product.title || product.name || 'Product'} added to your cart.`,
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 3000,
+        });
+      } catch {
+        // Fallback error toast handled inside handleAddToCart
+      }
+    }
+  });
+
+  const performAddToCart = async () => {
     if (isAdding) return;
 
     try {
@@ -50,7 +95,8 @@ export const ProductActions: React.FC<ProductActionsProps> = ({ product }) => {
         timer: 3000,
         timerProgressBar: true,
       });
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as { status?: number; data?: { message?: string } };
       const status = error?.status;
       const errorMessage =
         error?.data?.message ||
@@ -72,21 +118,66 @@ export const ProductActions: React.FC<ProductActionsProps> = ({ product }) => {
     }
   };
 
-  const handleBuyNow = () => {
-    router.push(productUrl);
+  const handleRemoveFromCart = async () => {
+    if (!cartItem || isRemoving) return;
+
+    try {
+      await removeCartItem(cartItem.id).unwrap();
+      Swal.fire({
+        icon: 'success',
+        title: 'Removed from Cart',
+        text: `${product.title || product.name || 'Product'} removed from your cart.`,
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+      });
+    } catch (err: unknown) {
+      const error = err as { data?: { message?: string } };
+      Swal.fire({
+        icon: 'error',
+        title: 'Remove Failed',
+        text: error?.data?.message || 'Failed to remove item from cart.',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+      });
+    }
   };
 
-  const handleToggleWishlist = () => {
-    const nextState = !isWishlisted;
-    setIsWishlisted(nextState);
-    Swal.fire({
-      icon: 'success',
-      title: nextState ? 'Added to Wishlist' : 'Removed from Wishlist',
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 2000,
-    });
+  const handleAddToCart = () => {
+    executeProtectedAction(
+      {
+        action: 'add_to_cart',
+        productId: product.id,
+        quantity,
+        selectedSize,
+      },
+      performAddToCart
+    );
+  };
+
+  const handleBuyNow = () => {
+    executeProtectedAction(
+      {
+        action: 'buy_now',
+        productId: product.id,
+        quantity,
+        selectedSize,
+      },
+      async () => {
+        try {
+          await addToCart({
+            productId: product.id,
+            quantity,
+          }).unwrap();
+          router.push('/checkout');
+        } catch {
+          router.push('/cart');
+        }
+      }
+    );
   };
 
   const handleShare = () => {
@@ -143,69 +234,106 @@ export const ProductActions: React.FC<ProductActionsProps> = ({ product }) => {
         </div>
       )}
 
-      {/* Quantity Counter */}
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Quantity</span>
-        <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1 shadow-2xs">
-          <button
-            type="button"
-            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer"
-            aria-label="Decrease quantity"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <span className="w-10 text-center font-bold text-sm text-slate-800 dark:text-slate-100">
-            {quantity}
-          </span>
-          <button
-            type="button"
-            onClick={() => setQuantity((q) => q + 1)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer"
-            aria-label="Increase quantity"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+      {/* Cart Status & Actions */}
+      {cartItem ? (
+        <div className="flex flex-col gap-4 p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+              <ShoppingCart className="w-4 h-4" /> Item is in your cart
+            </span>
+            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+              Current Qty: {cartItem.quantity}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Quantity:</span>
+              <CartQuantitySelector
+                itemId={cartItem.id}
+                currentQuantity={cartItem.quantity}
+                maxQuantity={product.quantity}
+                size="lg"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleRemoveFromCart}
+              disabled={isRemoving}
+              className="px-4 py-2.5 rounded-xl border border-rose-200 dark:border-rose-900 bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950 font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+            >
+              {isRemoving ? (
+                <Loader2 className="w-4 h-4 animate-spin text-rose-600" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              <span>Remove</span>
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Quantity Counter */}
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold text-slate-800 dark:text-slate-200">Quantity</span>
+            <div className="flex items-center rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-1 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                aria-label="Decrease quantity"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="w-10 text-center font-bold text-sm text-slate-800 dark:text-slate-100">
+                {quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition cursor-pointer"
+                aria-label="Increase quantity"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
 
-      {/* Action Buttons using reusable Button */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={handleAddToCart}
-          isLoading={isAdding}
-          disabled={isAdding}
-          className="flex-1 cursor-pointer font-bold shadow-md hover:shadow-lg transition-all"
-        >
-          {!isAdding && <ShoppingCart className="w-5 h-5 mr-2" />}
-          {isAdding ? 'Adding To Cart...' : 'Add To Cart'}
-        </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleAddToCart}
+              isLoading={isAdding}
+              disabled={isAdding}
+              className="flex-1 cursor-pointer font-bold shadow-md hover:shadow-lg transition-all"
+            >
+              {!isAdding && <ShoppingCart className="w-5 h-5 mr-2" />}
+              {isAdding ? 'Adding To Cart...' : 'Add To Cart'}
+            </Button>
 
-        <Button
-          variant="secondary"
-          size="lg"
-          onClick={handleBuyNow}
-          className="flex-1 cursor-pointer font-bold shadow-sm"
-        >
-          <Zap className="w-5 h-5 mr-2" /> Buy Now
-        </Button>
-      </div>
+            <Button
+              variant="secondary"
+              size="lg"
+              onClick={handleBuyNow}
+              className="flex-1 cursor-pointer font-bold shadow-sm"
+            >
+              <Zap className="w-5 h-5 mr-2" /> Buy Now
+            </Button>
+          </div>
+        </>
+      )}
 
       {/* Secondary Actions: Wishlist & Share */}
       <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-        <Button
-          variant="outline"
-          size="default"
-          onClick={handleToggleWishlist}
-          className={`flex-1 cursor-pointer ${
-            isWishlisted ? 'text-rose-500 border-rose-200 dark:border-rose-900 bg-rose-50/50' : ''
-          }`}
-        >
-          <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-rose-500 text-rose-500' : ''}`} />
-          {isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
-        </Button>
+        <WishlistButton
+          productId={product.id}
+          productTitle={product.title || product.name}
+          variant="button"
+          className="flex-1"
+        />
 
         <Button
           variant="ghost"
