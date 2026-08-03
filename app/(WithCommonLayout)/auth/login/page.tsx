@@ -20,9 +20,15 @@ export default function LoginPage() {
   );
 }
 
+import { useSearchParams } from 'next/navigation';
+import { sanitizeRedirectUrl, getPendingRedirectUrl } from '@/hooks/useProtectedAction';
+
 function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useAppDispatch();
+
+  const redirectParam = searchParams.get('redirect');
 
   const [loginApi, { isLoading }] = useLoginMutation();
   const [triggerGetMe] = useLazyGetMeQuery();
@@ -55,7 +61,6 @@ function LoginContent() {
       }).unwrap();
 
       const accessToken = result.accessToken || result.token || '';
-      const refreshToken = result.refreshToken || '';
 
       if (accessToken) {
         dispatch(
@@ -88,13 +93,21 @@ function LoginContent() {
         timer: 2000,
       });
 
-      // 3. Role-based redirect
-      const targetPath = getRoleDashboardPath(currentUser?.role);
-      router.push(targetPath);
-    } catch (error: any) {
-      const status = error?.status;
+      // 3. Check for returnUrl or role-based default redirect
+      const pendingUrl = getPendingRedirectUrl();
+      const target = pendingUrl || (redirectParam ? sanitizeRedirectUrl(redirectParam) : null);
+
+      if (target) {
+        router.replace(target);
+      } else {
+        const targetPath = getRoleDashboardPath(currentUser?.role);
+        router.replace(targetPath);
+      }
+    } catch (error: unknown) {
+      const err = error as { status?: number; data?: { message?: string } };
+      const status = err?.status;
       const message =
-        error?.data?.message ||
+        err?.data?.message ||
         (status === 401
           ? 'Invalid email or password.'
           : status === 404
@@ -214,7 +227,10 @@ function LoginContent() {
         {/* Footer Link */}
         <div className="text-center pt-2 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
           Don&apos;t have an account?{' '}
-          <Link href="/auth/register" className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+          <Link
+            href={redirectParam ? `/auth/register?redirect=${encodeURIComponent(redirectParam)}` : '/auth/register'}
+            className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+          >
             Create an account
           </Link>
         </div>
