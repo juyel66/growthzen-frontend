@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import { Product, getProductGalleryImages, getProductTitle } from '@/types/product';
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 
@@ -42,7 +42,7 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ product }) => {
         onMouseLeave={() => setIsZoomed(false)}
         onMouseMove={handleMouseMove}
       >
-        <Image
+        <SafeImage
           src={activeImage}
           alt={`${title} main view`}
           fill
@@ -51,7 +51,6 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ product }) => {
           className={`object-contain p-6 transition-transform duration-300 ${
             isZoomed ? 'scale-125 opacity-0' : 'scale-100 opacity-100'
           }`}
-          unoptimized={activeImage.startsWith('http') && !activeImage.includes('cloudinary') && !activeImage.includes('unsplash')}
         />
 
         {/* High Definition Zoom Lens overlay */}
@@ -111,13 +110,12 @@ export const ProductGallery: React.FC<ProductGalleryProps> = ({ product }) => {
                   : 'border-slate-200 dark:border-slate-800 opacity-70 hover:opacity-100 hover:border-slate-400'
               }`}
             >
-              <Image
+              <SafeImage
                 src={img}
                 alt={`${title} thumbnail ${idx + 1}`}
                 fill
                 sizes="80px"
                 className="object-cover p-1"
-                unoptimized={img.startsWith('http') && !img.includes('cloudinary') && !img.includes('unsplash')}
               />
             </button>
           ))}
