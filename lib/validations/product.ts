@@ -12,32 +12,26 @@ export const productFormSchema = z.object({
   categoryId: z.string().trim().min(1, 'Please select a category'),
   productCode: z.string().trim().min(1, 'Product code is required').max(100).regex(/^[A-Za-z0-9._-]+$/, 'Product code contains invalid characters'),
   barcode: z.string().trim().optional().nullable(),
-  costPrice: z.coerce.number().positive('Cost price must be greater than 0'),
-  customerSellPrice: z.coerce.number().positive('Customer sell price must be greater than 0'),
-  resellerPrice: z.coerce.number().positive('Reseller price must be greater than 0'),
+  costPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ required_error: 'Cost price is required', invalid_type_error: 'Cost price is required' }).positive('Cost price must be greater than 0')),
+  customerSellPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ required_error: 'Customer sell price is required', invalid_type_error: 'Customer sell price is required' }).positive('Customer sell price must be greater than 0')),
+  resellerPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ required_error: 'Reseller price is required', invalid_type_error: 'Reseller price is required' }).positive('Reseller price must be greater than 0')),
   salePrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(v)), z.number().positive('Sale price must be greater than 0').optional().nullable()),
-  discountType: z.enum(['PERCENTAGE', 'FIXED']).optional().nullable(),
+  specialSaleEnabled: z.boolean().default(false),
+  discountEnabled: z.boolean().default(false),
+  discountType: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : v), z.enum(['PERCENTAGE', 'FIXED']).optional().nullable().or(z.literal(''))),
   discountValue: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(v)), z.number().nonnegative('Discount value cannot be negative').optional().nullable()),
   taxRate: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(v)), z.number().nonnegative('Tax rate cannot be negative').max(100, 'Tax rate cannot exceed 100%').optional().nullable()),
-  couponCode: z.string().trim().optional().nullable(),
+  couponCode: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : String(v).trim()), z.string().optional().nullable().or(z.literal(''))),
   attributes: z.array(productAttributeSchema).optional(),
   enableSize: z.boolean().default(false),
   availableSizes: z.array(z.string()).optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'DRAFT']).default('ACTIVE'),
-  thumbnailImage: z.string().trim().min(1, 'Thumbnail image is required'),
-  productImages: z.array(z.string()).optional(),
+  thumbnailImage: z.any().refine((val) => val !== null && val !== undefined && val !== '', 'Thumbnail image is required'),
+  productImages: z.array(z.any()).optional(),
   productVideos: z.array(z.string()).optional(),
   isFeatured: z.boolean().default(false),
 }).superRefine((data, ctx) => {
-  // Validate Discount rules
-  if ((data.discountType && data.discountValue === null) || (!data.discountType && typeof data.discountValue === 'number' && data.discountValue > 0)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['discountValue'],
-      message: 'Discount Type and Discount Value must be provided together',
-    });
-  }
-
+  // Validate Discount percentage rule only if discount value is explicitly supplied
   if (data.discountType === 'PERCENTAGE' && typeof data.discountValue === 'number' && data.discountValue > 100) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
