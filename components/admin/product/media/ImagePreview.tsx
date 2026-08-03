@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import { X, RefreshCw, ChevronLeft, ChevronRight, Maximize2, Star } from 'lucide-react';
 import { ACCEPT_IMAGE_STRING } from '@/constants/media';
-import { formatImageUrl } from '@/types/product';
 
 interface ImagePreviewProps {
   src: string;
@@ -35,7 +34,6 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
 }) => {
   const replaceInputRef = useRef<HTMLInputElement>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const formattedSrc = formatImageUrl(src);
 
   const handleReplaceClick = () => {
     if (replaceInputRef.current) {
@@ -58,13 +56,12 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
       <div
         className={`relative group aspect-square rounded-2xl bg-slate-900/5 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-all duration-300 shadow-2xs hover:shadow-md hover:border-emerald-500/50 ${className}`}
       >
-        <Image
-          src={formattedSrc}
+        <SafeImage
+          src={src}
           alt={alt}
           fill
           sizes="(max-width: 768px) 100vw, 250px"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          unoptimized
         />
 
         {/* Badge overlay (e.g. Main Thumbnail or Index) */}
@@ -135,7 +132,7 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
                   disabled={!canMoveRight}
                   onClick={onMoveRight}
                   className="p-1 text-white hover:text-emerald-400 disabled:opacity-30 disabled:hover:text-white transition cursor-pointer"
-                  title="Move Right / Later"
+                  title="Move Later / Right"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -164,12 +161,11 @@ export const ImagePreview: React.FC<ImagePreviewProps> = ({
             className="relative max-w-4xl max-h-[90vh] w-full h-full flex items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
-              src={formattedSrc}
+            <SafeImage
+              src={src}
               alt={alt}
               fill
               className="object-contain rounded-2xl"
-              unoptimized
             />
             <button
               type="button"
