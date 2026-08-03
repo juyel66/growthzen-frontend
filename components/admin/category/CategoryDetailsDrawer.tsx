@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+import SafeImage from '@/components/ui/SafeImage';
 import { Category } from '@/types/category';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, FolderTree, Tag, Percent, Home, Calendar, Globe, Sparkles, Layers } from 'lucide-react';
