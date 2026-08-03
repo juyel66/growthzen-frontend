@@ -2,38 +2,28 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
-import { useGetCartQuery } from '@/services/cartApi';
+import CartBadge from '@/components/cart/CartBadge';
 
 export const CartButton = () => {
   const theme = useTheme();
-  
-  const { data: cartData } = useGetCartQuery();
-
-  const count = cartData?.totalQuantity ?? cartData?.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) ?? 0;
 
   return (
     <Link
       href="/cart"
-      className="relative p-2 hover:bg-slate-100/80 rounded-full transition-all group outline-none flex items-center justify-center cursor-pointer"
-      aria-label={`View Cart, ${count} items`}
+      className="relative p-2 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 rounded-full transition-all group outline-none flex items-center justify-center cursor-pointer"
+      aria-label="View Shopping Cart"
     >
-      <ShoppingBag
-        className="w-5.5 h-5.5 transition-all group-hover:scale-105"
+      <ShoppingCart
+        className="w-5.5 h-5.5 transition-all group-hover:scale-110 text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400"
         style={{ color: theme.textColor }}
       />
-      {count > 0 && (
-        <span
-          className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
-          style={{
-            backgroundColor: theme.primaryColor,
-          }}
-        >
-          {count}
-        </span>
-      )}
+      <div className="absolute -top-0.5 -right-0.5">
+        <CartBadge />
+      </div>
     </Link>
   );
 };
+
 export default CartButton;
