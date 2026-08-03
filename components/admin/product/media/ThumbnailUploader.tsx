@@ -1,14 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UseFormWatch, UseFormSetValue, FieldErrors } from 'react-hook-form';
 import { ProductFormValues } from '@/lib/validations/product';
 import { UploadDropzone } from './UploadDropzone';
-import { UploadProgress } from './UploadProgress';
 import { ImagePreview } from './ImagePreview';
 import { validateImageFile, ACCEPT_IMAGE_STRING } from '@/constants/media';
-import { uploadMediaFile } from '@/services/uploadService';
-import { UploadTask } from '@/types/upload';
 import { Star, Image as ImageIcon } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -23,13 +20,25 @@ export const ThumbnailUploader: React.FC<ThumbnailUploaderProps> = ({
   watch,
   setValue,
   errors,
-  onUploadingChange,
 }) => {
-  const thumbnailImage = watch('thumbnailImage');
-  const [uploadTask, setUploadTask] = useState<UploadTask | null>(null);
+  const thumbnailVal = watch('thumbnailImage');
+  const [previewUrl, setPreviewUrl] = useState<string>('');
 
-  const startUpload = async (file: File) => {
-    // 1. Validate file
+  useEffect(() => {
+    if (thumbnailVal instanceof File) {
+      const objectUrl = URL.createObjectURL(thumbnailVal);
+      setPreviewUrl(objectUrl);
+      return () => {
+        URL.revokeObjectURL(objectUrl);
+      };
+    } else if (typeof thumbnailVal === 'string' && thumbnailVal.trim()) {
+      setPreviewUrl(thumbnailVal);
+    } else {
+      setPreviewUrl('');
+    }
+  }, [thumbnailVal]);
+
+  const handleSelectFile = (file: File) => {
     const validation = validateImageFile(file);
     if (!validation.valid) {
       Swal.fire({
@@ -40,86 +49,23 @@ export const ThumbnailUploader: React.FC<ThumbnailUploaderProps> = ({
       return;
     }
 
-    const taskId = `thumb-${Date.now()}`;
-    const abortController = new AbortController();
-
-    const initialTask: UploadTask = {
-      id: taskId,
-      file,
-      progress: 0,
-      status: 'uploading',
-      abortController,
-    };
-
-    setUploadTask(initialTask);
-    if (onUploadingChange) onUploadingChange(true);
-
-    try {
-      const result = await uploadMediaFile(file, {
-        signal: abortController.signal,
-        onProgress: (progress) => {
-          setUploadTask((prev) => (prev ? { ...prev, progress } : null));
-        },
-      });
-
-      setUploadTask({
-        ...initialTask,
-        progress: 100,
-        status: 'completed',
-        url: result.url,
-      });
-
-      // Update Form Value
-      setValue('thumbnailImage', result.url, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-
-      setTimeout(() => {
-        setUploadTask(null);
-        if (onUploadingChange) onUploadingChange(false);
-      }, 800);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to upload image';
-      if (errorMessage === 'Upload cancelled') {
-        setUploadTask({
-          ...initialTask,
-          status: 'cancelled',
-          error: 'Upload cancelled by user',
-        });
-      } else {
-        setUploadTask({
-          ...initialTask,
-          status: 'error',
-          error: errorMessage,
-        });
-      }
-      if (onUploadingChange) onUploadingChange(false);
-    }
+    // Set File object directly in React Hook Form for FormData submission
+    setValue('thumbnailImage', file, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
   const handleFilesSelected = (files: File[]) => {
     if (files.length > 0) {
-      startUpload(files[0]);
-    }
-  };
-
-  const handleCancelUpload = () => {
-    if (uploadTask?.abortController) {
-      uploadTask.abortController.abort();
-    }
-  };
-
-  const handleRetryUpload = () => {
-    if (uploadTask?.file) {
-      startUpload(uploadTask.file);
+      handleSelectFile(files[0]);
     }
   };
 
   const handleRemove = () => {
     setValue('thumbnailImage', '', { shouldValidate: true, shouldDirty: true, shouldTouch: true });
-    setUploadTask(null);
+    setPreviewUrl('');
   };
 
   const handleReplaceFile = (file: File) => {
-    startUpload(file);
+    handleSelectFile(file);
   };
 
   return (
@@ -128,13 +74,13 @@ export const ThumbnailUploader: React.FC<ThumbnailUploaderProps> = ({
         <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
           <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" /> Main Thumbnail Image *
         </label>
-        <span className="text-[11px] text-slate-400 font-medium">Single Image (Max 10MB)</span>
+        <span className="text-[11px] text-slate-400 font-medium">Single Image File (Max 10MB)</span>
       </div>
 
       {/* Main Container / Content */}
-      {thumbnailImage ? (
+      {previewUrl ? (
         <ImagePreview
-          src={thumbnailImage}
+          src={previewUrl}
           alt="Product Main Thumbnail"
           isThumbnail={true}
           onRemove={handleRemove}
@@ -147,32 +93,18 @@ export const ThumbnailUploader: React.FC<ThumbnailUploaderProps> = ({
           accept={ACCEPT_IMAGE_STRING}
           multiple={false}
           title="Drag & Drop Main Thumbnail Image"
-          subtitle="Click to browse or drop product thumbnail image here"
+          subtitle="Click to browse or drop product thumbnail image file here"
           supportedFormatsText="JPG, PNG, WEBP, AVIF, GIF, SVG"
           maxSizeText="Max 10 MB"
-          disabled={uploadTask?.status === 'uploading'}
           iconType="image"
           className="w-full aspect-video border-dashed"
-        />
-      )}
-
-      {/* Active Upload Progress indicator */}
-      {uploadTask && (
-        <UploadProgress
-          fileName={uploadTask.file.name}
-          fileSize={uploadTask.file.size}
-          progress={uploadTask.progress}
-          status={uploadTask.status}
-          error={uploadTask.error}
-          onCancel={handleCancelUpload}
-          onRetry={handleRetryUpload}
         />
       )}
 
       {errors.thumbnailImage && (
         <p className="text-xs font-semibold text-rose-500 flex items-center gap-1">
           <ImageIcon className="w-3.5 h-3.5" />
-          {errors.thumbnailImage.message}
+          {typeof errors.thumbnailImage.message === 'string' ? errors.thumbnailImage.message : 'Thumbnail image is required'}
         </p>
       )}
     </div>
