@@ -3,15 +3,18 @@
 import React from 'react';
 import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { AddressType } from '@/types/shipping';
-import { MapPin, Phone, User, Home, Briefcase, Tag, Check } from 'lucide-react';
+import { MapPin, Phone, User, Home, Briefcase, Tag, Check, Truck, FileText } from 'lucide-react';
 
 export interface ShippingFormValues {
   recipientName: string;
   phone: string;
   division: string;
   district: string;
-  area: string;
+  upazila: string;
+  area?: string;
   addressLine: string;
+  shippingType: string;
+  orderNotes?: string;
   postalCode?: string;
   addressType: AddressType;
   isDefault?: boolean;
@@ -37,28 +40,28 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
   watch,
 }) => {
   const currentAddressType = watch('addressType') || 'Home';
-  const isDefault = watch('isDefault') || false;
+  const currentShippingType = watch('shippingType') || 'Standard Shipping';
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
         <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <MapPin className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-          Shipping Address
+          Shipping Address & Delivery Details
         </h2>
         <span className="text-xs text-slate-400 font-medium">Step 2 of 4</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Recipient Name */}
+        {/* Recipient Full Name */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-            <User className="w-3.5 h-3.5 text-slate-400" /> Recipient Name <span className="text-rose-500">*</span>
+            <User className="w-3.5 h-3.5 text-slate-400" /> Full Name <span className="text-rose-500">*</span>
           </label>
           <input
             type="text"
-            placeholder="Full Name"
-            {...register('recipientName', { required: 'Recipient name is required' })}
+            placeholder="Recipient Full Name"
+            {...register('recipientName', { required: 'Full name is required' })}
             className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
               errors.recipientName
                 ? 'border-rose-500 focus:ring-rose-500/20'
@@ -70,19 +73,19 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
           )}
         </div>
 
-        {/* Recipient Phone */}
+        {/* Recipient Phone (Mandatory) */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-            <Phone className="w-3.5 h-3.5 text-slate-400" /> Phone Number <span className="text-rose-500">*</span>
+            <Phone className="w-3.5 h-3.5 text-slate-400" /> Mobile Number <span className="text-rose-500">*</span>
           </label>
           <input
             type="tel"
             placeholder="01XXXXXXXXX"
             {...register('phone', {
-              required: 'Phone number is required',
+              required: 'Mobile number is required',
               pattern: {
                 value: /^(\+?88)?01[3-9]\d{8}$/,
-                message: 'Enter a valid Bangladeshi phone number',
+                message: 'Enter a valid Bangladeshi mobile number (11 digits)',
               },
             })}
             className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
@@ -103,7 +106,7 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
           </label>
           <input
             type="text"
-            placeholder="e.g. Dhaka, Chittagong"
+            placeholder="e.g. Dhaka, Chittagong, Rajshahi"
             {...register('division', { required: 'Division is required' })}
             className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
               errors.division
@@ -123,7 +126,7 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
           </label>
           <input
             type="text"
-            placeholder="e.g. Dhaka, Gazipur"
+            placeholder="e.g. Dhaka, Gazipur, Narayanganj"
             {...register('district', { required: 'District is required' })}
             className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
               errors.district
@@ -136,46 +139,52 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
           )}
         </div>
 
-        {/* Area */}
+        {/* Upazila / Thana */}
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Area / Thana <span className="text-rose-500">*</span>
+            Upazila / Thana <span className="text-rose-500">*</span>
           </label>
           <input
             type="text"
-            placeholder="e.g. Dhanmondi, Gulshan"
-            {...register('area', { required: 'Area is required' })}
+            placeholder="e.g. Dhanmondi, Savar, Uttara"
+            {...register('upazila', { required: 'Upazila is required' })}
             className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
-              errors.area
+              errors.upazila
                 ? 'border-rose-500 focus:ring-rose-500/20'
                 : 'border-slate-200 dark:border-slate-800 focus:border-emerald-600 focus:ring-emerald-500/20'
             }`}
           />
-          {errors.area && (
-            <span className="text-[11px] text-rose-500 font-semibold">{errors.area.message}</span>
+          {errors.upazila && (
+            <span className="text-[11px] text-rose-500 font-semibold">{errors.upazila.message}</span>
           )}
         </div>
 
-        {/* Postal Code */}
+        {/* Shipping Type */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">Postal Code</label>
-          <input
-            type="text"
-            placeholder="e.g. 1205"
-            {...register('postalCode')}
-            className="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-          />
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+            <Truck className="w-3.5 h-3.5 text-slate-400" /> Shipping Type <span className="text-rose-500">*</span>
+          </label>
+          <select
+            {...register('shippingType', { required: 'Shipping type is required' })}
+            className="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition-all cursor-pointer"
+          >
+            <option value="Standard Shipping">Standard Home Delivery (2-4 Days)</option>
+            <option value="Express Shipping">Express Fast Delivery (24-48 Hours)</option>
+          </select>
+          {errors.shippingType && (
+            <span className="text-[11px] text-rose-500 font-semibold">{errors.shippingType.message}</span>
+          )}
         </div>
 
-        {/* Detailed Address Line */}
+        {/* Detailed Street Address */}
         <div className="sm:col-span-2 flex flex-col gap-1.5">
           <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Street Address / House & Road No. <span className="text-rose-500">*</span>
+            Full Address / Street & House No. <span className="text-rose-500">*</span>
           </label>
           <textarea
             rows={2}
-            placeholder="House #12, Road #4, Block #B..."
-            {...register('addressLine', { required: 'Street address is required' })}
+            placeholder="House #12, Road #4, Block #B, Flat 3A..."
+            {...register('addressLine', { required: 'Full address is required' })}
             className={`px-4 py-2.5 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all resize-none ${
               errors.addressLine
                 ? 'border-rose-500 focus:ring-rose-500/20'
@@ -185,6 +194,19 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
           {errors.addressLine && (
             <span className="text-[11px] text-rose-500 font-semibold">{errors.addressLine.message}</span>
           )}
+        </div>
+
+        {/* Optional Order Notes */}
+        <div className="sm:col-span-2 flex flex-col gap-1.5">
+          <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+            <FileText className="w-3.5 h-3.5 text-slate-400" /> Order Notes <span className="text-slate-400 font-normal">(Optional)</span>
+          </label>
+          <textarea
+            rows={2}
+            placeholder="Special instructions for courier, preferred delivery time, call before delivery, etc."
+            {...register('orderNotes')}
+            className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition-all resize-none"
+          />
         </div>
 
         {/* Address Type Selector */}
@@ -212,22 +234,10 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
             })}
           </div>
         </div>
-
-        {/* Default Address Toggle */}
-        <div className="sm:col-span-2 flex items-center gap-3 pt-2">
-          <input
-            type="checkbox"
-            id="isDefault"
-            {...register('isDefault')}
-            className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-          />
-          <label htmlFor="isDefault" className="text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer select-none">
-            Save as default shipping address for future orders
-          </label>
-        </div>
       </div>
     </div>
   );
 };
 
 export default ShippingAddressForm;
+
