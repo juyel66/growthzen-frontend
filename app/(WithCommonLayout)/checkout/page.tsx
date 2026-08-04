@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Container from '@/components/navbar/Container';
 import { useGetCartQuery } from '@/services/cartApi';
@@ -10,43 +10,51 @@ import { selectIsAuthenticated } from '@/features/auth/authSlice';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
 import CheckoutSkeleton from '@/components/checkout/CheckoutSkeleton';
 import CartEmptyState from '@/components/cart/CartEmptyState';
-import { Home, ChevronRight, CreditCard, Lock } from 'lucide-react';
+import { getBuyNowItem } from '@/hooks/useProtectedAction';
+import { Home, ChevronRight, CreditCard } from 'lucide-react';
 
 export default function CheckoutPage() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
+  const [hasBuyNowItem, setHasBuyNowItem] = useState<boolean>(false);
+  const [isClientLoaded, setIsClientLoaded] = useState<boolean>(false);
+
+  useEffect(() => {
+    const item = getBuyNowItem();
+    if (item) {
+      setHasBuyNowItem(true);
+    }
+    setIsClientLoaded(true);
+  }, []);
 
   const { data: cart, isLoading: isCartLoading } = useGetCartQuery(undefined, {
     skip: !isAuthenticated,
   });
 
   const { isLoading: isCheckoutLoading } = useGetCheckoutQuery(undefined, {
-    skip: !isAuthenticated,
+    skip: !isAuthenticated || hasBuyNowItem,
   });
 
   const items = cart?.items || [];
-  const isLoading = isCartLoading || isCheckoutLoading;
+  const isLoading = isAuthenticated && (isCartLoading || isCheckoutLoading);
 
-  if (!isAuthenticated) {
+  if (!isClientLoaded) {
+    return (
+      <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 py-8">
+        <Container>
+          <CheckoutSkeleton />
+        </Container>
+      </div>
+    );
+  }
+
+  // If user is guest AND has no buyNow item, or if logged in with empty cart and no buyNow item
+  const hasNoItems = !hasBuyNowItem && items.length === 0;
+
+  if (hasNoItems && isClientLoaded && !isLoading) {
     return (
       <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 py-12">
         <Container>
-          <div className="flex flex-col items-center justify-center text-center p-10 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-xs max-w-lg mx-auto my-12">
-            <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center mb-4 text-emerald-600 dark:text-emerald-400">
-              <Lock className="w-8 h-8" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-              Login Required
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Please sign in to your account to complete your checkout and place your order.
-            </p>
-            <Link
-              href="/auth/login"
-              className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition shadow-md"
-            >
-              Sign In to Checkout
-            </Link>
-          </div>
+          <CartEmptyState />
         </Container>
       </div>
     );
@@ -62,19 +70,9 @@ export default function CheckoutPage() {
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 py-12">
-        <Container>
-          <CartEmptyState />
-        </Container>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 py-8">
-      <title>Secure Checkout - Enterprise Store</title>
+      <title>Secure Checkout - GrowthZen Enterprise Store</title>
 
       <Container className="flex flex-col gap-6">
         {/* Breadcrumb Navigation */}
@@ -88,7 +86,7 @@ export default function CheckoutPage() {
           </Link>
           <ChevronRight className="w-3.5 h-3.5 text-slate-300 dark:text-slate-700" />
           <span className="text-slate-800 dark:text-slate-200 font-semibold flex items-center gap-1">
-            <CreditCard className="w-3.5 h-3.5" /> Checkout
+            <CreditCard className="w-3.5 h-3.5 text-emerald-600" /> Checkout
           </span>
         </nav>
 
@@ -108,3 +106,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
