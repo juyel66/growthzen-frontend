@@ -5,32 +5,50 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useGetCartQuery } from '@/services/cartApi';
+import { useGetCartQuery, cartApi } from '@/services/cartApi';
 import { useGetMeQuery } from '@/services/authApi';
-import { usePlaceOrderMutation, useGetCheckoutSummaryQuery } from '@/services/checkoutApi';
-import { useAppSelector } from '@/redux/hooks';
-import { selectCurrentUser } from '@/features/auth/authSlice';
+import { usePlaceOrderMutation, useGetCheckoutSummaryQuery, checkoutApi } from '@/services/checkoutApi';
+import { useAppSelector, useAppDispatch } from '@/redux/hooks';
+import { selectCurrentUser, selectIsAuthenticated } from '@/features/auth/authSlice';
 import { PaymentMethod, CheckoutRequest } from '@/types/checkout';
 import { ShippingZone } from '@/types/shipping';
 import { Coupon } from '@/types/coupon';
+import { Product } from '@/types/product';
+import { CartItem } from '@/types/cart';
+import { getBuyNowItem, clearBuyNowItem, BuyNowSessionItem } from '@/hooks/useProtectedAction';
 
-import ShippingAddressForm, { ShippingFormValues } from './ShippingAddressForm';
+import ShippingAddressForm from './ShippingAddressForm';
 import ShippingSelector from './ShippingSelector';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import CheckoutSidebar from './CheckoutSidebar';
-import { User as UserIcon, Mail, Phone as PhoneIcon } from 'lucide-react';
+import { User as UserIcon, Mail, Phone as PhoneIcon, UserCheck, ShieldCheck } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 const checkoutSchema = z.object({
-  customerName: z.string().min(2, 'Customer name is required'),
-  customerEmail: z.string().email('Invalid email address'),
-  customerPhone: z.string().min(7, 'Enter a valid phone number'),
+  customerName: z.string().min(2, 'Full name is required'),
+  customerEmail: z
+    .string()
+    .transform((v) => v.trim())
+    .refine((val) => val === '' || z.string().email().safeParse(val).success, {
+      message: 'Invalid email address',
+    })
+    .optional(),
+  customerPhone: z
+    .string()
+    .min(7, 'Mobile number is required')
+    .regex(/^(\+?88)?01[3-9]\d{8}$/, 'Enter a valid Bangladeshi mobile number (e.g. 01700000000)'),
   recipientName: z.string().min(2, 'Recipient name is required'),
-  phone: z.string().min(7, 'Enter a valid phone number'),
+  phone: z
+    .string()
+    .min(7, 'Mobile number is required')
+    .regex(/^(\+?88)?01[3-9]\d{8}$/, 'Enter a valid Bangladeshi mobile number (e.g. 01700000000)'),
   division: z.string().min(2, 'Division is required'),
   district: z.string().min(2, 'District is required'),
-  area: z.string().min(2, 'Area is required'),
-  addressLine: z.string().min(5, 'Street address is required'),
+  upazila: z.string().min(2, 'Upazila is required'),
+  area: z.string().optional(),
+  addressLine: z.string().min(5, 'Full address is required'),
+  shippingType: z.string().min(1, 'Shipping type is required'),
+  orderNotes: z.string().optional(),
   postalCode: z.string().optional(),
   addressType: z.enum(['Home', 'Office', 'Other']),
   isDefault: z.boolean().optional(),
@@ -42,33 +60,79 @@ type CheckoutFormSchema = z.infer<typeof checkoutSchema>;
 
 export const CheckoutForm: React.FC = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
-  // RTK Query Hooks & State
+  // Authentication & Profile State
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const currentUser = useAppSelector(selectCurrentUser);
-  const { data: fetchedUser } = useGetMeQuery();
+  const { data: fetchedUser } = useGetMeQuery(undefined, { skip: !isAuthenticated });
   const user = fetchedUser || currentUser;
 
-  const { data: cart } = useGetCartQuery();
+  // Buy Now item state (for guests or direct single item buy now)
+  const [buyNowItem, setBuyNowItem] = useState<BuyNowSessionItem | null>(null);
+
+  useEffect(() => {
+    const item = getBuyNowItem();
+    if (item) {
+      setBuyNowItem(item);
+    }
+  }, []);
+
+  // Cart Query skipped for guests unless authenticated
+  const { data: cart } = useGetCartQuery(undefined, { skip: !isAuthenticated });
   const [placeOrder, { isLoading: isSubmitting }] = usePlaceOrderMutation();
 
-  // Local state for shipping & coupon
+  // Local state for shipping & payment
   const [shippingZone, setShippingZone] = useState<ShippingZone>('inside_dhaka');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('COD');
 
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
 
-  const { data: checkoutSummary } = useGetCheckoutSummaryQuery({
-    deliveryArea: shippingZone === 'inside_dhaka' ? 'INSIDE_DHAKA' : 'OUTSIDE_DHAKA',
-  });
+  // Summary Query only run for authenticated user with cart items
+  const { data: checkoutSummary } = useGetCheckoutSummaryQuery(
+    { deliveryArea: shippingZone === 'inside_dhaka' ? 'INSIDE_DHAKA' : 'OUTSIDE_DHAKA' },
+    { skip: !isAuthenticated || Boolean(buyNowItem) }
+  );
 
-  const cartItems = cart?.items || [];
+  // Construct active items list for Checkout
+  const checkoutItems: CartItem[] = buyNowItem
+    ? [
+        {
+          id: `buynow-${buyNowItem.productId}`,
+          cartId: 'buynow',
+          productId: buyNowItem.productId,
+          quantity: buyNowItem.quantity,
+          unitPrice: buyNowItem.price,
+          totalPrice: buyNowItem.price * buyNowItem.quantity,
+          size: buyNowItem.selectedSize ?? null,
+          product: {
+            id: buyNowItem.productId,
+            title: buyNowItem.title,
+            name: buyNowItem.title,
+            customerSellPrice: buyNowItem.price,
+            price: buyNowItem.price,
+            productCode: buyNowItem.productCode || '',
+            slug: buyNowItem.slug || buyNowItem.productId,
+            images: buyNowItem.image ? [{ id: '1', url: buyNowItem.image, isPrimary: true }] : [],
+          } as unknown as Product,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ]
+    : cart?.items || [];
 
-  const subtotal = checkoutSummary?.subtotal ?? cart?.summary?.subtotal ?? 0;
+  // Totals calculations
+  const calculatedSubtotal = checkoutItems.reduce((sum, item) => {
+    const price = item.unitPrice ?? item.price ?? item.product?.customerSellPrice ?? item.product?.price ?? 0;
+    return sum + price * item.quantity;
+  }, 0);
+
+  const subtotal = checkoutSummary?.subtotal ?? calculatedSubtotal;
   const categoryDiscount = checkoutSummary?.discount ?? cart?.summary?.discount ?? 0;
   const shippingFee = checkoutSummary?.shippingCharge ?? (shippingZone === 'inside_dhaka' ? 60 : 120);
   const tax = cart?.summary?.tax ?? 0;
-  const grandTotal = checkoutSummary?.grandTotal ?? Math.max(0, subtotal - categoryDiscount + shippingFee + tax);
+  const grandTotal = checkoutSummary?.grandTotal ?? Math.max(0, subtotal - categoryDiscount - couponDiscount + shippingFee + tax);
 
   const {
     register,
@@ -86,8 +150,11 @@ export const CheckoutForm: React.FC = () => {
       phone: user?.phone || '',
       division: 'Dhaka',
       district: 'Dhaka',
+      upazila: '',
       area: '',
       addressLine: '',
+      shippingType: 'Standard Shipping',
+      orderNotes: '',
       postalCode: '',
       addressType: 'Home',
       isDefault: false,
@@ -96,7 +163,22 @@ export const CheckoutForm: React.FC = () => {
     },
   });
 
-  // Prefill user info when fetched
+  // Keep fields linked & prefill profile when logged in
+  const watchCustomerName = watch('customerName');
+  const watchCustomerPhone = watch('customerPhone');
+
+  useEffect(() => {
+    if (watchCustomerName && !watch('recipientName')) {
+      setValue('recipientName', watchCustomerName);
+    }
+  }, [watchCustomerName, setValue, watch]);
+
+  useEffect(() => {
+    if (watchCustomerPhone && !watch('phone')) {
+      setValue('phone', watchCustomerPhone);
+    }
+  }, [watchCustomerPhone, setValue, watch]);
+
   useEffect(() => {
     if (user) {
       if (user.name) {
@@ -132,23 +214,29 @@ export const CheckoutForm: React.FC = () => {
   };
 
   const onSubmit = async (data: CheckoutFormSchema) => {
-    if (cartItems.length === 0) {
+    if (checkoutItems.length === 0) {
       Swal.fire({
         icon: 'warning',
-        title: 'Empty Cart',
-        text: 'Your cart is empty. Please add items before checking out.',
+        title: 'No Items to Checkout',
+        text: 'Your order has no items. Please select a product or add items to cart.',
       });
       return;
     }
 
-    const name = (data.recipientName || data.customerName || user?.name || '').trim();
-    const phone = (data.phone || data.customerPhone || user?.phone || '').trim();
+    const name = (data.customerName || data.recipientName || 'Customer').trim();
+    const phone = (data.customerPhone || data.phone || '').trim();
+    const email = (data.customerEmail || '').trim();
 
-    const addressParts = [data.addressLine, data.area, data.district, data.division].filter(Boolean);
-    let fullAddress = addressParts.join(', ').trim();
-    if (fullAddress.length < 10) {
-      fullAddress = `${fullAddress}, Bangladesh`;
+    if (!phone) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Mobile Phone Required',
+        text: 'Mobile phone number is mandatory for placing an order.',
+      });
+      return;
     }
+
+    const fullAddress = `${data.addressLine}, ${data.upazila}, ${data.district}, ${data.division}`.trim();
 
     const deliveryArea: 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA' =
       data.shippingZone === 'outside_dhaka' || shippingZone === 'outside_dhaka'
@@ -161,12 +249,37 @@ export const CheckoutForm: React.FC = () => {
       ? (rawMethod as PaymentMethod)
       : 'COD';
 
+    // Products payload
+    const productsPayload = checkoutItems
+      .map((item) => {
+        const id = item.productId || item.product?.id;
+        if (!id) return null;
+        return {
+          productId: id,
+          quantity: item.quantity,
+          size: item.size || null,
+        };
+      })
+      .filter((item): item is { productId: string; quantity: number; size: string | null } => Boolean(item));
+
     const checkoutPayload: CheckoutRequest = {
+      products: productsPayload,
       customerName: name,
       customerPhone: phone,
+      customerEmail: email || undefined,
+      userEmail: email || undefined,
+      guestName: name,
+      guestPhone: phone,
+      guestEmail: email || undefined,
+      guestAddress: data.addressLine,
+      guestDivision: data.division,
+      guestDistrict: data.district,
+      guestUpazila: data.upazila,
+      shippingType: data.shippingType,
       address: fullAddress,
       deliveryArea,
       paymentMethod: uppercasePaymentMethod,
+      orderNotes: data.orderNotes || undefined,
     };
 
     if (appliedCoupon?.code?.trim()) {
@@ -175,12 +288,43 @@ export const CheckoutForm: React.FC = () => {
 
     try {
       const response = await placeOrder(checkoutPayload).unwrap();
-      const orderId = response.orderId || response.data?.orderNumber || response.data?.orderId || response.data?.id || 'ORD-' + Date.now();
+      const orderId =
+        response.orderId ||
+        response.data?.orderCode ||
+        response.data?.orderNumber ||
+        response.data?.orderId ||
+        response.data?.id ||
+        'ORD-' + Date.now();
+
+      clearBuyNowItem();
+
+      // 1. Invalidate Cart & Checkout RTK Query cache
+      dispatch(cartApi.util.invalidateTags(['Cart']));
+      dispatch(checkoutApi.util.invalidateTags(['Checkout']));
+
+      // 2. Refetch cart immediately
+      dispatch(cartApi.endpoints.getCart.initiate(undefined, { subscribe: false, forceRefetch: true }));
+
+      // 3. Clear guest cart from localStorage/sessionStorage
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.removeItem('growthzen_buy_now_item');
+          sessionStorage.removeItem('growthzen_pending_action');
+          sessionStorage.removeItem('buy_now_item');
+
+          localStorage.removeItem('growthzen_guest_cart');
+          localStorage.removeItem('growthzen_cart');
+          localStorage.removeItem('guest_cart');
+          localStorage.removeItem('cart');
+        } catch {
+          // ignore
+        }
+      }
 
       Swal.fire({
         icon: 'success',
         title: 'Order Placed Successfully!',
-        text: `Thank you for your order! Your order ID is ${orderId}.`,
+        text: `Thank you for your order! Your order ID is #${orderId}.`,
         confirmButtonText: 'View Order Details',
         confirmButtonColor: '#059669',
       }).then(() => {
@@ -191,17 +335,15 @@ export const CheckoutForm: React.FC = () => {
       const status = error?.status;
       const errorMessage =
         error?.data?.message ||
-        (status === 401
-          ? 'Session expired. Please log in to complete checkout.'
-          : status === 400
-          ? 'Invalid order details. Please check form fields.'
+        (status === 400
+          ? 'Invalid order details. Please check mobile number and address fields.'
           : status === 409
           ? 'Stock changed while ordering. Please review your cart.'
           : 'Failed to place order. Please try again.');
 
       Swal.fire({
         icon: 'error',
-        title: status === 401 ? 'Authentication Error' : 'Checkout Failed',
+        title: 'Checkout Failed',
         text: errorMessage,
       });
     }
@@ -211,47 +353,49 @@ export const CheckoutForm: React.FC = () => {
     <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       {/* Left Column: Customer Info, Shipping Form, Shipping Selector, Payment Selection */}
       <div className="lg:col-span-2 flex flex-col gap-6">
-        {/* 1. Customer Information Card */}
+        {/* 1. Customer Contact Card */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <UserIcon className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-              Customer Information
+              Customer Contact Information
             </h2>
-            <span className="text-xs text-slate-400 font-medium">Step 1 of 4</span>
+            {isAuthenticated ? (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-900">
+                <UserCheck className="w-3.5 h-3.5" /> Logged In User
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 bg-amber-50 dark:bg-amber-950 px-2.5 py-1 rounded-full border border-amber-200 dark:border-amber-900">
+                <ShieldCheck className="w-3.5 h-3.5" /> Guest Checkout
+              </span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Customer Name */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                <UserIcon className="w-3.5 h-3.5 text-slate-400" /> Full Name
+                <UserIcon className="w-3.5 h-3.5 text-slate-400" /> Full Name <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
-                readOnly
+                placeholder="Full Name"
                 {...register('customerName')}
-                className="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-sm font-semibold cursor-not-allowed"
+                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
+                  errors.customerName
+                    ? 'border-rose-500 focus:ring-rose-500/20'
+                    : 'border-slate-200 dark:border-slate-800 focus:border-emerald-600 focus:ring-emerald-500/20'
+                }`}
               />
+              {errors.customerName && (
+                <span className="text-[11px] text-rose-500 font-semibold">{errors.customerName.message}</span>
+              )}
             </div>
 
-            {/* Customer Email */}
+            {/* Customer Phone (Mandatory) */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                <Mail className="w-3.5 h-3.5 text-slate-400" /> Email Address
-              </label>
-              <input
-                type="email"
-                readOnly
-                {...register('customerEmail')}
-                className="h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100/70 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 text-sm font-semibold cursor-not-allowed"
-              />
-            </div>
-
-            {/* Customer Phone (Editable) */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                <PhoneIcon className="w-3.5 h-3.5 text-slate-400" /> Account Phone <span className="text-rose-500">*</span>
+                <PhoneIcon className="w-3.5 h-3.5 text-slate-400" /> Mobile Number <span className="text-rose-500">*</span>
               </label>
               <input
                 type="tel"
@@ -267,10 +411,30 @@ export const CheckoutForm: React.FC = () => {
                 <span className="text-[11px] text-rose-500 font-semibold">{errors.customerPhone.message}</span>
               )}
             </div>
+
+            {/* Customer Email (Optional) */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Mail className="w-3.5 h-3.5 text-slate-400" /> Email Address <span className="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <input
+                type="email"
+                placeholder="example@domain.com"
+                {...register('customerEmail')}
+                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
+                  errors.customerEmail
+                    ? 'border-rose-500 focus:ring-rose-500/20'
+                    : 'border-slate-200 dark:border-slate-800 focus:border-emerald-600 focus:ring-emerald-500/20'
+                }`}
+              />
+              {errors.customerEmail && (
+                <span className="text-[11px] text-rose-500 font-semibold">{errors.customerEmail.message}</span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* 2. Shipping Address Form */}
+        {/* 2. Shipping Address & Details Form */}
         <ShippingAddressForm
           register={register as unknown as React.ComponentProps<typeof ShippingAddressForm>['register']}
           errors={errors as unknown as React.ComponentProps<typeof ShippingAddressForm>['errors']}
@@ -278,7 +442,7 @@ export const CheckoutForm: React.FC = () => {
           watch={watch as unknown as React.ComponentProps<typeof ShippingAddressForm>['watch']}
         />
 
-        {/* 3. Delivery Method / Shipping Selector */}
+        {/* 3. Delivery Area / Zone Selector */}
         <ShippingSelector
           selectedZone={shippingZone}
           onZoneChange={handleZoneChange}
@@ -294,7 +458,7 @@ export const CheckoutForm: React.FC = () => {
       {/* Right Column: Sticky Sidebar with Order Summary, Coupon, Submit CTA */}
       <div className="lg:col-span-1">
         <CheckoutSidebar
-          items={cartItems}
+          items={checkoutItems}
           subtotal={subtotal}
           shippingFee={shippingFee}
           coupon={appliedCoupon}
@@ -312,3 +476,4 @@ export const CheckoutForm: React.FC = () => {
 };
 
 export default CheckoutForm;
+
