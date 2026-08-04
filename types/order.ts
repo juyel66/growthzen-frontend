@@ -1,36 +1,118 @@
-import { Product } from './product';
-import { ShippingAddress } from './shipping';
+export type OrderStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'PROCESSING'
+  | 'PACKED'
+  | 'SHIPPED'
+  | 'DELIVERED'
+  | 'CANCELLED'
+  | 'RETURNED';
 
-export interface OrderItem {
+export type PaymentStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'FAILED'
+  | 'CANCELLED'
+  | 'REFUNDED';
+
+export type PaymentMethod =
+  | 'COD'
+  | 'BKASH'
+  | 'NAGAD'
+  | 'SSLCOMMERZ'
+  | 'STRIPE'
+  | 'PAYPAL';
+
+export type DeliveryArea = 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
+
+export interface OrderItemView {
   id: string;
   productId: string;
-  product: Product;
+  productCode?: string;
   quantity: number;
-  price: number;
+  size?: string | null;
+  unitPrice: number;
+  totalPrice: number;
+  canReview?: boolean;
+  reviewed?: boolean;
+  reviewId?: string | null;
+  product?: {
+    id: string;
+    title?: string;
+    name?: string;
+    thumbnailImage?: string;
+    images?: string[];
+  };
 }
 
-export interface Order {
+export interface OrderPaymentInfo {
   id: string;
-  userId: string;
-  items: OrderItem[];
-  shippingAddress: ShippingAddress;
-  shippingMethod: string;
-  paymentMethod: 'stripe' | 'paypal' | 'cod';
-  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
-  orderStatus: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  method: PaymentMethod | string;
+  status: PaymentStatus | string;
+  transactionId?: string | null;
+  paidAmount?: number | null;
+}
+
+export interface OrderView {
+  id: string;
+  orderCode: string;
+  userId?: string | null;
+  userEmail?: string | null;
+  customerEmail?: string | null;
+  customerName: string;
+  customerPhone: string;
+  guestName?: string | null;
+  guestPhone?: string | null;
+  guestEmail?: string | null;
+  guestAddress?: string | null;
+  guestDivision?: string | null;
+  guestDistrict?: string | null;
+  guestUpazila?: string | null;
+  address: string;
+  deliveryArea: DeliveryArea | string;
+  shippingType?: string | null;
+  orderNotes?: string | null;
+  paymentMethod: PaymentMethod | string;
+  payment?: OrderPaymentInfo | null;
   subtotal: number;
-  shippingCost: number;
-  discount: number;
-  totalAmount: number;
-  trackingNumber?: string;
+  discountAmount: number;
+  deliveryCharge: number;
+  payableAmount: number;
+  couponCode?: string | null;
+  status: OrderStatus;
+  items: OrderItemView[];
   createdAt: string;
   updatedAt: string;
+  confirmedAt?: string | null;
+  cancelledAt?: string | null;
+  deliveredAt?: string | null;
+  adminNote?: string | null;
 }
 
-export interface OrderResponse {
-  orders: Order[];
-  total: number;
+export interface OrderListMeta {
   page: number;
   limit: number;
+  total: number;
   totalPages: number;
 }
+
+export interface OrderListResponse {
+  items: OrderView[];
+  meta: OrderListMeta;
+}
+
+export interface OrderQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: OrderStatus | string;
+}
+
+/**
+ * Utility helper to determine if payment is collected
+ */
+export const isPaymentCollected = (order: OrderView | null | undefined): boolean => {
+  if (!order) return false;
+  if (order.payment?.status === 'PAID') return true;
+  return false;
+};
