@@ -2,6 +2,7 @@ import { Product } from './product';
 
 export interface CartItem {
   id: string; // Cart item ID
+  cartId?: string;
   productId?: string;
   quantity: number;
   unitPrice: number;
@@ -9,7 +10,9 @@ export interface CartItem {
   lineSubtotal?: number;
   lineDiscount?: number;
   lineTotal?: number;
+  totalPrice?: number;
   price?: number;
+  size?: string | null;
   product: Product;
   createdAt?: string;
   updatedAt?: string;
