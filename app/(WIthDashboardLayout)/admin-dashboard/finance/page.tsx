@@ -1,12 +1,9 @@
 import React from 'react';
 
-const page = () => {
-    return (
-        <div>
-            This is the Admin Finance Page
-            
-        </div>
-    );
-};
-
-export default page;
+export default function AdminFinancePage() {
+  return (
+    <div className="p-6">
+      <h1 className="text-xl font-bold">Admin Finance Page</h1>
+    </div>
+  );
+}
