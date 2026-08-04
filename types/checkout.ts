@@ -6,13 +6,45 @@ export type DeliveryArea = 'INSIDE_DHAKA' | 'OUTSIDE_DHAKA';
 
 export type PaymentMethod = 'COD' | 'BKASH' | 'NAGAD';
 
+export interface CheckoutOrderItem {
+  productId: string;
+  quantity: number;
+  size?: string | null;
+}
+
+export interface BuyNowItem {
+  productId: string;
+  title: string;
+  price: number;
+  image?: string;
+  quantity: number;
+  selectedSize?: string | null;
+  productCode?: string;
+  slug?: string;
+}
+
 export interface CheckoutRequest {
-  customerName: string;
-  customerPhone: string;
-  address: string;
+  products?: CheckoutOrderItem[];
+  customerName?: string;
+  customerPhone?: string;
+  customerEmail?: string;
+  userEmail?: string;
+  guestName?: string;
+  guestPhone?: string;
+  guestEmail?: string;
+  address?: string;
+  guestAddress?: string;
+  division?: string;
+  guestDivision?: string;
+  district?: string;
+  guestDistrict?: string;
+  upazila?: string;
+  guestUpazila?: string;
+  shippingType?: string;
   deliveryArea: DeliveryArea;
-  paymentMethod: PaymentMethod;
+  paymentMethod?: PaymentMethod;
   shippingMethodId?: string;
+  orderNotes?: string;
   couponCode?: string;
 }
 
@@ -42,6 +74,7 @@ export interface CheckoutDetails {
 export interface CheckoutResponseData {
   id?: string;
   orderId?: string;
+  orderCode?: string;
   orderNumber?: string;
   totalAmount?: number;
   grandTotal?: number;
@@ -64,3 +97,4 @@ export interface CheckoutResponse {
   data?: CheckoutResponseData;
   totalAmount?: number;
 }
+
