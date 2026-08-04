@@ -18,6 +18,9 @@ export const baseApi = createApi({
     'Dashboard',
     'Reports',
     'Settings',
+    'Banners',
+    'CategoryDiscounts',
+    'Reviews',
   ],
   endpoints: () => ({}),
 });
