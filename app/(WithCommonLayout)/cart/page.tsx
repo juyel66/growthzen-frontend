@@ -16,9 +16,7 @@ import { ShoppingBag, Home, ChevronRight, Lock } from 'lucide-react';
 export default function CartPage() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
-  const { data: cart, isLoading, isFetching } = useGetCartQuery(undefined, {
-    skip: !isAuthenticated,
-  });
+  const { data: cart, isLoading, isFetching } = useGetCartQuery();
 
   const items = cart?.items || [];
   const summary = cart?.summary;
