@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Product } from '@/types/product';
+import { Product, getProductMainImage } from '@/types/product';
 import { Button } from '@/components/ui/button';
 import WishlistButton from './WishlistButton';
 import { ShoppingCart, Zap, Share2, Plus, Minus, Check, Trash2, Loader2 } from 'lucide-react';
@@ -10,7 +10,7 @@ import { useAddToCartMutation, useGetCartQuery, useRemoveCartItemMutation } from
 import CartQuantitySelector from '@/components/cart/CartQuantitySelector';
 import { useAppSelector } from '@/redux/hooks';
 import { selectIsAuthenticated } from '@/features/auth/authSlice';
-import { useProtectedAction } from '@/hooks/useProtectedAction';
+import { useProtectedAction, saveBuyNowItem } from '@/hooks/useProtectedAction';
 import Swal from 'sweetalert2';
 
 interface ProductActionsProps {
@@ -46,15 +46,18 @@ export const ProductActions: React.FC<ProductActionsProps> = ({ product }) => {
     if (pendingPayload.selectedSize) setSelectedSize(pendingPayload.selectedSize);
 
     if (pendingPayload.action === 'buy_now') {
-      try {
-        await addToCart({
-          productId: product.id,
-          quantity: qtyToUse,
-        }).unwrap();
-        router.push('/checkout');
-      } catch {
-        router.push('/cart');
-      }
+      const unitPrice = product.customerSellPrice ?? product.salePrice ?? product.price ?? 0;
+      saveBuyNowItem({
+        productId: product.id,
+        title: product.title || product.name || 'Product',
+        price: unitPrice,
+        image: getProductMainImage(product),
+        quantity: qtyToUse,
+        selectedSize: pendingPayload.selectedSize ?? selectedSize,
+        productCode: product.productCode,
+        slug: productSlug,
+      });
+      router.push('/checkout');
     } else if (pendingPayload.action === 'add_to_cart') {
       try {
         await addToCart({
@@ -158,26 +161,30 @@ export const ProductActions: React.FC<ProductActionsProps> = ({ product }) => {
     );
   };
 
-  const handleBuyNow = () => {
-    executeProtectedAction(
-      {
-        action: 'buy_now',
-        productId: product.id,
-        quantity,
-        selectedSize,
-      },
-      async () => {
-        try {
-          await addToCart({
-            productId: product.id,
-            quantity,
-          }).unwrap();
-          router.push('/checkout');
-        } catch {
-          router.push('/cart');
-        }
+  const handleBuyNow = async () => {
+    const unitPrice = product.customerSellPrice ?? product.salePrice ?? product.price ?? 0;
+    saveBuyNowItem({
+      productId: product.id,
+      title: product.title || product.name || 'Product',
+      price: unitPrice,
+      image: getProductMainImage(product),
+      quantity,
+      selectedSize,
+      productCode: product.productCode,
+      slug: productSlug,
+    });
+
+    if (isAuthenticated) {
+      try {
+        await addToCart({
+          productId: product.id,
+          quantity,
+        }).unwrap();
+      } catch {
+        // Continue to checkout with buyNowItem if cart endpoint throws
       }
-    );
+    }
+    router.push('/checkout');
   };
 
   const handleShare = () => {
