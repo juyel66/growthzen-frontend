@@ -18,7 +18,7 @@ import { useAddToCartMutation, useGetCartQuery } from '@/services/cartApi';
 import CartQuantitySelector from '@/components/cart/CartQuantitySelector';
 import { useAppSelector } from '@/redux/hooks';
 import { selectIsAuthenticated } from '@/features/auth/authSlice';
-import { useProtectedAction } from '@/hooks/useProtectedAction';
+import { useProtectedAction, saveBuyNowItem } from '@/hooks/useProtectedAction';
 import Swal from 'sweetalert2';
 
 interface ProductCardProps {
@@ -118,29 +118,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
     );
   };
 
-  const handleBuyNow = (e: React.MouseEvent) => {
+  const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    executeProtectedAction(
-      {
-        action: 'buy_now',
-        productId: product.id,
-        quantity: 1,
-        returnUrl: productUrl,
-      },
-      async () => {
-        try {
-          await addToCart({
-            productId: product.id,
-            quantity: 1,
-          }).unwrap();
-          router.push('/checkout');
-        } catch {
-          router.push('/cart');
-        }
+    const unitPrice = product.customerSellPrice ?? product.salePrice ?? product.price ?? 0;
+    saveBuyNowItem({
+      productId: product.id,
+      title: title,
+      price: unitPrice,
+      image: mainImage,
+      quantity: 1,
+      productCode: product.productCode,
+      slug: productSlug,
+    });
+
+    if (isAuthenticated) {
+      try {
+        await addToCart({
+          productId: product.id,
+          quantity: 1,
+        }).unwrap();
+      } catch {
+        // Continue to checkout with buyNowItem if cart fails
       }
-    );
+    }
+
+    router.push('/checkout');
   };
 
   return (
