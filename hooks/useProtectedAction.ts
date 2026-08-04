@@ -20,6 +20,47 @@ export interface PendingActionPayload {
 }
 
 export const PENDING_ACTION_KEY = 'growthzen_pending_action';
+export const BUY_NOW_KEY = 'growthzen_buy_now_item';
+
+export interface BuyNowSessionItem {
+  productId: string;
+  title: string;
+  price: number;
+  image?: string;
+  quantity: number;
+  selectedSize?: string | null;
+  productCode?: string;
+  slug?: string;
+}
+
+export function saveBuyNowItem(item: BuyNowSessionItem): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(BUY_NOW_KEY, JSON.stringify(item));
+  } catch {
+    // sessionStorage disabled or full
+  }
+}
+
+export function getBuyNowItem(): BuyNowSessionItem | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(BUY_NOW_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function clearBuyNowItem(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.removeItem(BUY_NOW_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 /**
  * Validates redirect URLs to ensure they are internal relative paths.
