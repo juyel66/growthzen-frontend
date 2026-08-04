@@ -12,18 +12,14 @@ interface CartBadgeProps {
 
 export const CartBadge: React.FC<CartBadgeProps> = ({ className = '' }) => {
   const theme = useTheme();
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
-  const { data: cartData } = useGetCartQuery(undefined, {
-    skip: !isAuthenticated,
-  });
+  const { data: cartData } = useGetCartQuery();
 
-  const count = isAuthenticated
-    ? cartData?.summary?.totalQuantity ??
-      cartData?.totalQuantity ??
-      cartData?.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) ??
-      0
-    : 0;
+  const count =
+    cartData?.summary?.totalQuantity ??
+    cartData?.totalQuantity ??
+    cartData?.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) ??
+    0;
 
   if (count <= 0) return null;
 
