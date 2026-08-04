@@ -85,7 +85,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                   {title}
                 </span>
                 <span className="text-[11px] font-semibold text-slate-400">
-                  {item.quantity} x ${unitPrice.toFixed(2)}
+                  {item.quantity} x ${unitPrice.toFixed(2)}{item.size ? ` • Size: ${item.size}` : ''}
                 </span>
               </div>
 
@@ -122,7 +122,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-1">
-            <Truck className="w-3.5 h-3.5" /> Shipping Fee
+            <Truck className="w-3.5 h-3.5" /> Delivery charge
           </span>
           <span className="font-bold text-slate-900 dark:text-white">
             {shippingFee === 0 ? (
