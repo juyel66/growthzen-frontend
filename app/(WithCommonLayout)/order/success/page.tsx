@@ -3,7 +3,18 @@
 import React, { use } from 'react';
 import Link from 'next/link';
 import Container from '@/components/navbar/Container';
-import { CheckCircle2, ShoppingBag, Truck, Package, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useGetOrderByIdQuery } from '@/services/orderApi';
+import {
+  CheckCircle2,
+  ShoppingBag,
+  Truck,
+  Package,
+  Calendar,
+  ArrowRight,
+  ShieldCheck,
+  Tag,
+  Receipt,
+} from 'lucide-react';
 
 interface PageProps {
   searchParams: Promise<{ orderId?: string }>;
@@ -11,12 +22,30 @@ interface PageProps {
 
 export default function OrderSuccessPage({ searchParams }: PageProps) {
   const resolvedParams = use(searchParams);
-  const orderId = resolvedParams.orderId || 'ORD-' + Math.floor(100000 + Math.random() * 900000);
+  const rawOrderId = resolvedParams.orderId || '';
 
-  const estimatedDelivery = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString(
-    'en-US',
-    { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }
-  );
+  const { data: order, isLoading } = useGetOrderByIdQuery(rawOrderId, {
+    skip: !rawOrderId,
+  });
+
+  const displayOrderId = order?.orderCode || rawOrderId || 'ORD-CONFIRMED';
+  const estimatedDelivery = order?.confirmedAt
+    ? new Date(new Date(order.confirmedAt).getTime() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString(
+        'en-US',
+        { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }
+      )
+    : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+
+  const subtotal = order?.subtotal ?? 0;
+  const discountAmount = order?.discountAmount ?? 0;
+  const deliveryCharge = order?.deliveryCharge ?? 0;
+  const payableAmount = order?.payableAmount ?? 0;
+  const couponCode = order?.couponCode;
 
   return (
     <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 py-12">
@@ -54,7 +83,7 @@ export default function OrderSuccessPage({ searchParams }: PageProps) {
                     Order Number
                   </span>
                   <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    #{orderId}
+                    #{displayOrderId}
                   </span>
                 </div>
               </div>
@@ -74,6 +103,53 @@ export default function OrderSuccessPage({ searchParams }: PageProps) {
                 </div>
               </div>
             </div>
+
+            {/* Order Pricing & Coupon Summary Card */}
+            {order && (
+              <div className="w-full p-5 rounded-2xl bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 flex flex-col gap-3 text-left text-xs">
+                <div className="flex items-center gap-2 border-b border-emerald-200/60 dark:border-emerald-900/40 pb-2">
+                  <Receipt className="w-4 h-4 text-emerald-600" />
+                  <span className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">
+                    Order Financial Summary
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-slate-600 dark:text-slate-400 font-medium">
+                  <span>Original Price / Subtotal:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">${subtotal.toFixed(2)}</span>
+                </div>
+
+                {couponCode && (
+                  <div className="flex justify-between items-center text-emerald-700 dark:text-emerald-300 font-semibold">
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5 text-emerald-600" /> Coupon Used:
+                    </span>
+                    <span className="font-mono font-black uppercase bg-emerald-100 dark:bg-emerald-900/80 px-2 py-0.5 rounded text-[11px]">
+                      {couponCode}
+                    </span>
+                  </div>
+                )}
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-bold">
+                    <span>Discount Saved:</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between items-center text-slate-600 dark:text-slate-400 font-medium">
+                  <span>Delivery Charge:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">${deliveryCharge.toFixed(2)}</span>
+                </div>
+
+                <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 flex justify-between items-center text-sm font-black text-slate-900 dark:text-white">
+                  <span>Final Price Paid:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 text-lg">
+                    ${payableAmount.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 w-full pt-2">
