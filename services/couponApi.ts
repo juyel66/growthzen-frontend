@@ -1,5 +1,12 @@
 import { baseApi } from './baseApi';
-import { Coupon, ApplyCouponInput, ApplyCouponResponse, RemoveCouponResponse } from '@/types/coupon';
+import {
+  Coupon,
+  CreateCouponInput,
+  UpdateCouponInput,
+  ApplyCouponInput,
+  ApplyCouponResponse,
+  RemoveCouponResponse,
+} from '@/types/coupon';
 
 export const couponApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -12,18 +19,95 @@ export const couponApi = baseApi.injectEndpoints({
         if (Array.isArray(response)) return response;
         return [];
       },
-      providesTags: ['Coupons'],
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.map(({ id }) => ({ type: 'Coupons' as const, id })),
+              { type: 'Coupons', id: 'LIST' },
+            ]
+          : [{ type: 'Coupons', id: 'LIST' }],
+    }),
+
+    getCouponById: builder.query<Coupon, string>({
+      query: (id) => `/coupons/${id}`,
+      transformResponse: (response: unknown) => {
+        const res = response as { data?: Coupon };
+        return res?.data ?? (response as Coupon);
+      },
+      providesTags: (result, error, id) => [{ type: 'Coupons', id }],
+    }),
+
+    createCoupon: builder.mutation<Coupon, CreateCouponInput>({
+      query: (body) => ({
+        url: '/coupons',
+        method: 'POST',
+        body,
+      }),
+      transformResponse: (response: unknown) => {
+        const res = response as { data?: Coupon };
+        return res?.data ?? (response as Coupon);
+      },
+      invalidatesTags: [
+        { type: 'Coupons', id: 'LIST' },
+        'Coupons',
+        'Checkout',
+        'Cart',
+        'Dashboard',
+        'Orders',
+      ],
+    }),
+
+    updateCoupon: builder.mutation<Coupon, { id: string; data: UpdateCouponInput }>({
+      query: ({ id, data }) => ({
+        url: `/coupons/${id}`,
+        method: 'PATCH',
+        body: data,
+      }),
+      transformResponse: (response: unknown) => {
+        const res = response as { data?: Coupon };
+        return res?.data ?? (response as Coupon);
+      },
+      invalidatesTags: (result, error, { id }) => [
+        { type: 'Coupons', id },
+        { type: 'Coupons', id: 'LIST' },
+        'Coupons',
+        'Checkout',
+        'Cart',
+        'Dashboard',
+        'Orders',
+      ],
+    }),
+
+    deleteCoupon: builder.mutation<{ message?: string; success?: boolean }, string>({
+      query: (id) => ({
+        url: `/coupons/${id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: [
+        { type: 'Coupons', id: 'LIST' },
+        'Coupons',
+        'Checkout',
+        'Cart',
+        'Dashboard',
+        'Orders',
+      ],
     }),
 
     applyCoupon: builder.mutation<ApplyCouponResponse, ApplyCouponInput>({
       query: (body) => ({
         url: '/coupons/apply',
         method: 'POST',
-        body,
+        body: { code: body.code.trim() },
       }),
       transformResponse: (response: unknown) => {
         if (!response) return { valid: false, discountAmount: 0 };
-        const res = response as { data?: ApplyCouponResponse; valid?: boolean; discountAmount?: number; message?: string; coupon?: Coupon };
+        const res = response as {
+          data?: ApplyCouponResponse;
+          valid?: boolean;
+          discountAmount?: number;
+          message?: string;
+          coupon?: Coupon;
+        };
         if (res.data) return res.data;
         return {
           valid: res.valid ?? true,
@@ -32,13 +116,13 @@ export const couponApi = baseApi.injectEndpoints({
           coupon: res.coupon,
         };
       },
-      invalidatesTags: ['Coupons', 'Checkout', 'Cart'],
+      invalidatesTags: ['Coupons', 'Checkout', 'Cart', 'Dashboard'],
     }),
 
     removeCoupon: builder.mutation<RemoveCouponResponse, { code?: string } | void>({
       query: (body) => ({
         url: '/coupons/remove',
-        method: 'DELETE',
+        method: 'POST',
         body: body || {},
       }),
       transformResponse: (response: unknown) => {
@@ -50,7 +134,7 @@ export const couponApi = baseApi.injectEndpoints({
           message: res.message,
         };
       },
-      invalidatesTags: ['Coupons', 'Checkout', 'Cart'],
+      invalidatesTags: ['Coupons', 'Checkout', 'Cart', 'Dashboard'],
     }),
   }),
   overrideExisting: true,
@@ -58,6 +142,10 @@ export const couponApi = baseApi.injectEndpoints({
 
 export const {
   useGetCouponsQuery,
+  useGetCouponByIdQuery,
+  useCreateCouponMutation,
+  useUpdateCouponMutation,
+  useDeleteCouponMutation,
   useApplyCouponMutation,
   useRemoveCouponMutation,
 } = couponApi;
