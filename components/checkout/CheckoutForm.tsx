@@ -95,6 +95,21 @@ export const CheckoutForm: React.FC = () => {
     { skip: !isAuthenticated || Boolean(buyNowItem) }
   );
 
+  // Auto-sync backend applied coupon from checkoutSummary
+  useEffect(() => {
+    if (checkoutSummary?.appliedCoupon && !appliedCoupon) {
+      const disc = checkoutSummary.appliedCoupon.discountAmount ?? 0;
+      setAppliedCoupon({
+        id: checkoutSummary.appliedCoupon.id,
+        code: checkoutSummary.appliedCoupon.code,
+        discountType: 'FIXED',
+        discountValue: disc,
+        isActive: true,
+      });
+      setCouponDiscount(disc);
+    }
+  }, [checkoutSummary, appliedCoupon]);
+
   // Construct active items list for Checkout
   const checkoutItems: CartItem[] = buyNowItem
     ? [
