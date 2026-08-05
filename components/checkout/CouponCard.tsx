@@ -40,7 +40,14 @@ export const CouponCard: React.FC<CouponCardProps> = ({
     }
   };
 
-  const scopeLabel = coupon.scope === 'category' ? `Category: ${coupon.categoryName || 'Specific'}` : 'Global Store Discount';
+  const scopeLabel =
+    coupon.scope === 'SPECIFIC_CATEGORY' || coupon.scope === 'category'
+      ? `Category: ${coupon.categoryName || coupon.categories?.join(', ') || 'Specific'}`
+      : coupon.scope === 'SPECIFIC_PRODUCT'
+      ? 'Specific Products'
+      : 'Global Store Discount';
+
+  const expiry = coupon.expiresAt || coupon.expiryDate;
 
   return (
     <div className="p-4 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 flex flex-col gap-3 shadow-2xs">
@@ -55,7 +62,7 @@ export const CouponCard: React.FC<CouponCardProps> = ({
               <Sparkles className="w-3 h-3 text-amber-500 fill-amber-400" />
             </span>
             <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-              {coupon.name || 'Promotional Discount'}
+              {coupon.description || coupon.name || 'Promotional Discount'}
             </span>
           </div>
         </div>
@@ -86,10 +93,10 @@ export const CouponCard: React.FC<CouponCardProps> = ({
         </span>
       </div>
 
-      {coupon.expiryDate && (
+      {expiry && (
         <div className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
           <Calendar className="w-3 h-3" />
-          <span>Valid until {new Date(coupon.expiryDate).toLocaleDateString()}</span>
+          <span>Valid until {new Date(expiry).toLocaleDateString()}</span>
         </div>
       )}
     </div>
