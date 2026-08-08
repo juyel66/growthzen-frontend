@@ -6,6 +6,12 @@ import { CheckCircle2, XCircle, RotateCcw } from "lucide-react";
 
 interface OrderTimelineProps {
   status: OrderStatus | string;
+  productCost?: number | null;
+  courierServiceCost?: number | null;
+  courierCost?: number | null;
+  deliveryProfit?: number | null;
+  courierProfit?: number | null;
+  netProfit?: number | null;
 }
 
 const STAGES = [
@@ -17,7 +23,24 @@ const STAGES = [
   { key: "DELIVERED", label: "Delivered" },
 ];
 
-export const OrderTimeline: React.FC<OrderTimelineProps> = ({ status }) => {
+const formatCurrency = (val: number | null | undefined) => {
+  if (val === null || val === undefined) return "--";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
+    maximumFractionDigits: 2,
+  }).format(val);
+};
+
+export const OrderTimeline: React.FC<OrderTimelineProps> = ({
+  status,
+  productCost,
+  courierServiceCost,
+  courierCost,
+  deliveryProfit,
+  courierProfit,
+  netProfit,
+}) => {
   const s = (status || "PENDING").toUpperCase();
 
   if (s === "CANCELLED") {
@@ -61,46 +84,98 @@ export const OrderTimeline: React.FC<OrderTimelineProps> = ({ status }) => {
   };
 
   const currentIndex = getStageIndex(s);
+  const costVal = courierServiceCost ?? courierCost;
+  const profitVal = deliveryProfit ?? courierProfit;
 
   return (
     <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xs space-y-4">
-      <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
-        Order Fulfillment Timeline
-      </h3>
+      {/* Stages Stepper Progress Bar */}
+      <div className="relative flex items-center justify-between">
+        {/* Background Track Line */}
+        <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-100 dark:bg-slate-800 -translate-y-1/2 z-0" />
+        
+        {/* Active Track Progress Line */}
+        <div
+          className="absolute top-1/2 left-0 h-1 bg-emerald-500 -translate-y-1/2 z-0 transition-all duration-500"
+          style={{ width: `${(currentIndex / (STAGES.length - 1)) * 100}%` }}
+        />
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {STAGES.map((st, idx) => {
-          const isDone = idx <= currentIndex;
+        {STAGES.map((stage, idx) => {
+          const isCompleted = idx <= currentIndex;
           const isCurrent = idx === currentIndex;
 
           return (
-            <div
-              key={st.key}
-              className={`p-3 rounded-xl border flex items-center gap-2.5 transition-all ${
-                isCurrent
-                  ? "bg-blue-600 text-white border-blue-600 font-bold shadow-md scale-[1.02]"
-                  : isDone
-                  ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200"
-                  : "bg-slate-50 dark:bg-slate-800 text-slate-400 border-slate-100 dark:border-slate-800"
-              }`}
-            >
+            <div key={stage.key} className="relative z-10 flex flex-col items-center gap-2">
               <div
-                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  isCurrent
-                    ? "bg-white text-blue-600"
-                    : isDone
-                    ? "bg-emerald-500 text-white"
-                    : "bg-slate-200 dark:bg-slate-700 text-slate-500"
+                className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${
+                  isCompleted
+                    ? "bg-emerald-600 text-white shadow-xs ring-4 ring-emerald-500/20"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-200 dark:border-slate-700"
                 }`}
               >
-                {isDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : idx + 1}
+                {isCompleted ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
               </div>
-
-              <span className="text-xs font-semibold">{st.label}</span>
+              <span
+                className={`text-xs font-bold tracking-tight ${
+                  isCurrent
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : isCompleted
+                    ? "text-slate-800 dark:text-slate-200"
+                    : "text-slate-400"
+                }`}
+              >
+                {stage.label}
+              </span>
             </div>
           );
         })}
       </div>
+
+      {/* Delivered Accounting Details Banner */}
+      {s === "DELIVERED" && (
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-800/40 p-4 rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 rounded-lg">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">
+                Order Update History - Delivered Accounting
+              </h4>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Backend transaction ledger metrics upon order delivery
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-6 text-xs">
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">Product Cost</span>
+              <span className="font-extrabold text-slate-900 dark:text-slate-100">
+                {productCost != null ? formatCurrency(productCost) : "--"}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">Courier Cost</span>
+              <span className="font-extrabold text-slate-900 dark:text-slate-100">
+                {costVal != null ? formatCurrency(costVal) : "--"}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">Courier Profit</span>
+              <span className="font-extrabold text-blue-600 dark:text-blue-400">
+                {profitVal != null ? formatCurrency(profitVal) : "--"}
+              </span>
+            </div>
+            <div>
+              <span className="text-slate-500 block text-[10px] uppercase font-bold">Net Profit</span>
+              <span className="font-black text-emerald-600 dark:text-emerald-400 text-sm">
+                {netProfit != null ? formatCurrency(netProfit) : "--"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+

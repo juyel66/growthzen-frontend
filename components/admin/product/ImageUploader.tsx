@@ -161,8 +161,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 imgItem instanceof File
                   ? URL.createObjectURL(imgItem)
                   : typeof imgItem === 'string'
-                  ? imgItem
-                  : '';
+                    ? imgItem
+                    : '';
 
               return (
                 <ImagePreview
@@ -186,3 +186,4 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 };
 
 export default ImageUploader;
+

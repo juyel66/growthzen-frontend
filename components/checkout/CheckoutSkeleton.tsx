@@ -55,3 +55,4 @@ export const CheckoutSkeleton: React.FC = () => {
 };
 
 export default CheckoutSkeleton;
+

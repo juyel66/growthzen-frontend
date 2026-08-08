@@ -18,6 +18,7 @@ const MOCK_RELATED_PRODUCTS: Product[] = [
     slug: 'minimalist-desk-lamp',
     description: 'Smart dimmable LED desk lamp with touch controls and warm tone options.',
     category: 'Electronics',
+    displayPrice: 59.99,
     customerSellPrice: 59.99,
     originalPrice: 79.99,
     discountAmount: 20.0,
@@ -35,6 +36,7 @@ const MOCK_RELATED_PRODUCTS: Product[] = [
     slug: 'wireless-headphones',
     description: 'High fidelity audio with active noise cancellation and 40-hour battery life.',
     category: 'Electronics',
+    displayPrice: 199.00,
     customerSellPrice: 199.00,
     originalPrice: 249.00,
     discountAmount: 50.0,
@@ -52,6 +54,7 @@ const MOCK_RELATED_PRODUCTS: Product[] = [
     slug: 'cotton-modern-hoodie',
     description: '100% organic cotton hoodie crafted for everyday comfort and warmth.',
     category: 'Fashion',
+    displayPrice: 45.50,
     customerSellPrice: 45.50,
     originalPrice: 45.50,
     discountAmount: 0,
@@ -70,6 +73,7 @@ const MOCK_RELATED_PRODUCTS: Product[] = [
     slug: 'smart-fitness-tracker',
     description: 'Track heart rate, sleep quality, steps and sports metrics in real time.',
     category: 'Watches',
+    displayPrice: 89.00,
     customerSellPrice: 89.00,
     originalPrice: 119.00,
     discountAmount: 30.0,
@@ -116,3 +120,4 @@ export const RelatedProducts: React.FC<RelatedProductsProps> = ({
 };
 
 export default RelatedProducts;
+

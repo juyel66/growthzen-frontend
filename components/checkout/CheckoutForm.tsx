@@ -13,7 +13,7 @@ import { selectCurrentUser, selectIsAuthenticated } from '@/features/auth/authSl
 import { PaymentMethod, CheckoutRequest } from '@/types/checkout';
 import { ShippingZone } from '@/types/shipping';
 import { Coupon } from '@/types/coupon';
-import { Product } from '@/types/product';
+import { Product, getProductDisplayPrice } from '@/types/product';
 import { CartItem } from '@/types/cart';
 import { getBuyNowItem, clearBuyNowItem, BuyNowSessionItem } from '@/hooks/useProtectedAction';
 
@@ -24,6 +24,15 @@ import CheckoutSidebar from './CheckoutSidebar';
 import { User as UserIcon, Mail, Phone as PhoneIcon, UserCheck, ShieldCheck } from 'lucide-react';
 import Swal from 'sweetalert2';
 
+import { isValidBDMobileNumber, normalizeBDMobileNumber } from '@/utils/phoneValidation';
+
+const bdPhoneSchema = z
+  .string()
+  .min(1, 'Mobile number is required')
+  .refine((val) => isValidBDMobileNumber(val), {
+    message: 'Enter a valid Bangladeshi mobile number (e.g. 01700000000)',
+  });
+
 const checkoutSchema = z.object({
   customerName: z.string().min(2, 'Full name is required'),
   customerEmail: z
@@ -33,15 +42,9 @@ const checkoutSchema = z.object({
       message: 'Invalid email address',
     })
     .optional(),
-  customerPhone: z
-    .string()
-    .min(7, 'Mobile number is required')
-    .regex(/^(\+?88)?01[3-9]\d{8}$/, 'Enter a valid Bangladeshi mobile number (e.g. 01700000000)'),
+  customerPhone: bdPhoneSchema,
   recipientName: z.string().min(2, 'Recipient name is required'),
-  phone: z
-    .string()
-    .min(7, 'Mobile number is required')
-    .regex(/^(\+?88)?01[3-9]\d{8}$/, 'Enter a valid Bangladeshi mobile number (e.g. 01700000000)'),
+  phone: bdPhoneSchema,
   division: z.string().min(2, 'Division is required'),
   district: z.string().min(2, 'District is required'),
   upazila: z.string().min(2, 'Upazila is required'),
@@ -89,9 +92,43 @@ export const CheckoutForm: React.FC = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<number>(0);
 
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<CheckoutFormSchema>({
+    resolver: zodResolver(checkoutSchema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
+    defaultValues: {
+      customerName: user?.name || '',
+      customerEmail: user?.email || '',
+      customerPhone: user?.phone || '',
+      recipientName: user?.name || '',
+      phone: user?.phone || '',
+      division: 'Dhaka',
+      district: 'Dhaka',
+      upazila: '',
+      area: '',
+      addressLine: '',
+      shippingType: 'Standard Shipping',
+      orderNotes: '',
+      postalCode: '',
+      addressType: 'Home',
+      isDefault: false,
+      shippingZone: 'inside_dhaka',
+      paymentMethod: 'COD',
+    },
+  });
+
+  const watchShippingZone = watch('shippingZone');
+  const activeZone: ShippingZone = (watchShippingZone || shippingZone || 'inside_dhaka') as ShippingZone;
+
   // Summary Query only run for authenticated user with cart items
   const { data: checkoutSummary } = useGetCheckoutSummaryQuery(
-    { deliveryArea: shippingZone === 'inside_dhaka' ? 'INSIDE_DHAKA' : 'OUTSIDE_DHAKA' },
+    { deliveryArea: activeZone === 'inside_dhaka' ? 'INSIDE_DHAKA' : 'OUTSIDE_DHAKA' },
     { skip: !isAuthenticated || Boolean(buyNowItem) }
   );
 
@@ -113,70 +150,44 @@ export const CheckoutForm: React.FC = () => {
   // Construct active items list for Checkout
   const checkoutItems: CartItem[] = buyNowItem
     ? [
-        {
-          id: `buynow-${buyNowItem.productId}`,
-          cartId: 'buynow',
-          productId: buyNowItem.productId,
-          quantity: buyNowItem.quantity,
-          unitPrice: buyNowItem.price,
-          totalPrice: buyNowItem.price * buyNowItem.quantity,
-          size: buyNowItem.selectedSize ?? null,
-          product: {
-            id: buyNowItem.productId,
-            title: buyNowItem.title,
-            name: buyNowItem.title,
-            customerSellPrice: buyNowItem.price,
-            price: buyNowItem.price,
-            productCode: buyNowItem.productCode || '',
-            slug: buyNowItem.slug || buyNowItem.productId,
-            images: buyNowItem.image ? [{ id: '1', url: buyNowItem.image, isPrimary: true }] : [],
-          } as unknown as Product,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ]
+      {
+        id: `buynow-${buyNowItem.productId}`,
+        cartId: 'buynow',
+        productId: buyNowItem.productId,
+        quantity: buyNowItem.quantity,
+        unitPrice: buyNowItem.price,
+        totalPrice: buyNowItem.price * buyNowItem.quantity,
+        size: buyNowItem.selectedSize ?? null,
+        product: {
+          id: buyNowItem.productId,
+          title: buyNowItem.title,
+          name: buyNowItem.title,
+          displayPrice: buyNowItem.price,
+          customerSellPrice: buyNowItem.price,
+          price: buyNowItem.price,
+          productCode: buyNowItem.productCode || '',
+          slug: buyNowItem.slug || buyNowItem.productId,
+          images: buyNowItem.image ? [{ id: '1', url: buyNowItem.image, isPrimary: true }] : [],
+        } as unknown as Product,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]
     : cart?.items || [];
 
-  // Totals calculations
+  // Totals calculations - reactive single source of truth for shipping fee & grand total
   const calculatedSubtotal = checkoutItems.reduce((sum, item) => {
-    const price = item.unitPrice ?? item.price ?? item.product?.customerSellPrice ?? item.product?.price ?? 0;
+    const price = item.unitPrice ?? item.price ?? (item.product ? getProductDisplayPrice(item.product) : 0);
     return sum + price * item.quantity;
   }, 0);
 
   const subtotal = checkoutSummary?.subtotal ?? calculatedSubtotal;
   const categoryDiscount = checkoutSummary?.discount ?? cart?.summary?.discount ?? 0;
-  const shippingFee = checkoutSummary?.shippingCharge ?? (shippingZone === 'inside_dhaka' ? 60 : 120);
-  const tax = cart?.summary?.tax ?? 0;
-  const grandTotal = checkoutSummary?.grandTotal ?? Math.max(0, subtotal - categoryDiscount - couponDiscount + shippingFee + tax);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<CheckoutFormSchema>({
-    resolver: zodResolver(checkoutSchema),
-    defaultValues: {
-      customerName: user?.name || '',
-      customerEmail: user?.email || '',
-      customerPhone: user?.phone || '',
-      recipientName: user?.name || '',
-      phone: user?.phone || '',
-      division: 'Dhaka',
-      district: 'Dhaka',
-      upazila: '',
-      area: '',
-      addressLine: '',
-      shippingType: 'Standard Shipping',
-      orderNotes: '',
-      postalCode: '',
-      addressType: 'Home',
-      isDefault: false,
-      shippingZone: 'inside_dhaka',
-      paymentMethod: 'COD',
-    },
-  });
+  // Single source of truth for delivery charge: Inside Dhaka = 60, Outside Dhaka = 120
+  const shippingFee = activeZone === 'outside_dhaka' ? 120 : 60;
+  const tax = cart?.summary?.tax ?? 0;
+  const grandTotal = Math.max(0, subtotal - categoryDiscount - couponDiscount + shippingFee + tax);
 
   // Keep fields linked & prefill profile when logged in
   const watchCustomerName = watch('customerName');
@@ -210,12 +221,12 @@ export const CheckoutForm: React.FC = () => {
 
   const handleZoneChange = (zone: ShippingZone) => {
     setShippingZone(zone);
-    setValue('shippingZone', zone);
+    setValue('shippingZone', zone, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
   const handlePaymentMethodChange = (method: PaymentMethod) => {
     setPaymentMethod(method);
-    setValue('paymentMethod', method);
+    setValue('paymentMethod', method, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
   };
 
   const handleCouponApplied = (coupon: Coupon, discountAmount: number) => {
@@ -239,7 +250,8 @@ export const CheckoutForm: React.FC = () => {
     }
 
     const name = (data.customerName || data.recipientName || 'Customer').trim();
-    const phone = (data.customerPhone || data.phone || '').trim();
+    const phone = normalizeBDMobileNumber(data.customerPhone || data.phone || '');
+    const recipientPhone = normalizeBDMobileNumber(data.phone || data.customerPhone || '');
     const email = (data.customerEmail || '').trim();
 
     if (!phone) {
@@ -353,8 +365,8 @@ export const CheckoutForm: React.FC = () => {
         (status === 400
           ? 'Invalid order details. Please check mobile number and address fields.'
           : status === 409
-          ? 'Stock changed while ordering. Please review your cart.'
-          : 'Failed to place order. Please try again.');
+            ? 'Stock changed while ordering. Please review your cart.'
+            : 'Failed to place order. Please try again.');
 
       Swal.fire({
         icon: 'error',
@@ -459,7 +471,7 @@ export const CheckoutForm: React.FC = () => {
 
         {/* 3. Delivery Area / Zone Selector */}
         <ShippingSelector
-          selectedZone={shippingZone}
+          selectedZone={activeZone}
           onZoneChange={handleZoneChange}
         />
 
@@ -491,4 +503,5 @@ export const CheckoutForm: React.FC = () => {
 };
 
 export default CheckoutForm;
+
 

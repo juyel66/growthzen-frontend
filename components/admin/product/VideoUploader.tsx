@@ -93,10 +93,10 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
         const next = prev.map((t) =>
           t.id === taskId
             ? {
-                ...t,
-                status: taskStatus,
-                error: isCancelled ? 'Upload cancelled' : errorMessage,
-              }
+              ...t,
+              status: taskStatus,
+              error: isCancelled ? 'Upload cancelled' : errorMessage,
+            }
             : t
         );
         notifyUploadingStatus(next);
@@ -125,8 +125,8 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
           activeTab === 'youtube'
             ? 'Please enter a valid YouTube video or shorts URL.'
             : activeTab === 'facebook'
-            ? 'Please enter a valid Facebook video link.'
-            : 'Please enter a valid video URL.',
+              ? 'Please enter a valid Facebook video link.'
+              : 'Please enter a valid video URL.',
       });
       return;
     }
@@ -351,3 +351,4 @@ export const VideoUploader: React.FC<VideoUploaderProps> = ({
 };
 
 export default VideoUploader;
+

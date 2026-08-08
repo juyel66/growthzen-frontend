@@ -20,8 +20,8 @@ export class DefaultUploadProvider implements IUploadProvider {
       throw new Error('Upload cancelled');
     }
 
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    const apiBase = rawApiUrl.replace(/\/+$/, '');
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://growthzen-it-backend.onrender.com/api';
+    const apiBase = rawApiUrl.replace(/\/+৳/, '');
     const endpoints = [
       `${apiBase}/upload`,
       `${apiBase}/upload/image`,
@@ -173,7 +173,7 @@ export function parseYouTubeUrl(url: string): VideoPlatformInfo {
 
   // RegEx for matching YouTube URLs
   const regExp =
-    /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
+    /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:\S+)?৳/;
   const match = trimmed.match(regExp);
 
   if (match && match[1]) {
@@ -235,7 +235,7 @@ export function parseVideoUrl(url: string): VideoPlatformInfo {
 
   // Direct video URL (.mp4, .webm, .mov, blob:, data:)
   const isDirectVideo =
-    /\.(mp4|webm|mov)(\?.*)?$/i.test(trimmed) ||
+    /\.(mp4|webm|mov)(\?.*)?৳/i.test(trimmed) ||
     trimmed.startsWith('blob:') ||
     trimmed.startsWith('data:video');
 

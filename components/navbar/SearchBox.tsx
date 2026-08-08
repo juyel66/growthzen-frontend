@@ -85,3 +85,4 @@ export const SearchBox: React.FC<SearchBoxProps> = ({
   );
 };
 export default SearchBox;
+

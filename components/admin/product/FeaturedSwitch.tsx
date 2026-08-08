@@ -38,3 +38,4 @@ export const FeaturedSwitch: React.FC<FeaturedSwitchProps> = ({ register }) => {
 };
 
 export default FeaturedSwitch;
+

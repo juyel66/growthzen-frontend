@@ -68,3 +68,4 @@ export const dummyCategories: Category[] = [
   },
 ];
 export default dummyCategories;
+

@@ -41,3 +41,4 @@ export const WishlistEmptyState: React.FC = () => {
 };
 
 export default WishlistEmptyState;
+

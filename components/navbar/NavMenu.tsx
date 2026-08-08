@@ -18,3 +18,4 @@ export const NavMenu = () => {
   );
 };
 export default NavMenu;
+

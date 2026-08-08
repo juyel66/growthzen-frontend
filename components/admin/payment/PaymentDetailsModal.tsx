@@ -15,7 +15,7 @@ interface PaymentDetailsModalProps {
 const formatCurrency = (val: number | undefined | null) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -176,3 +176,4 @@ export const PaymentDetailsModal: React.FC<PaymentDetailsModalProps> = ({
     </div>
   );
 };
+

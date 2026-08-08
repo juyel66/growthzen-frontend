@@ -17,6 +17,8 @@ import { TopSellingProducts } from "@/components/admin/dashboard/TopSellingProdu
 import { RecentCustomers } from "@/components/admin/dashboard/RecentCustomers";
 import { ShippingSummary } from "@/components/admin/dashboard/ShippingSummary";
 import { CouponSummary } from "@/components/admin/dashboard/CouponSummary";
+import { DailyAnalyticsChartsSection } from "@/components/admin/dashboard/DailyAnalyticsChartsSection";
+import { BusinessSummarySection } from "@/components/admin/dashboard/BusinessSummarySection";
 import { DashboardSkeletons } from "@/components/admin/dashboard/DashboardSkeletons";
 
 import {
@@ -29,13 +31,16 @@ import {
   Package,
   Star,
   AlertTriangle,
+  TrendingUp,
+  Truck,
+  Coins,
 } from "lucide-react";
 
 const formatCurrency = (val: number | undefined) => {
-  if (val === undefined || val === null) return "$0.00";
+  if (val === undefined || val === null) return "৳0.00";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 2,
   }).format(val);
 };
@@ -106,71 +111,87 @@ export default function Dashboard() {
     );
   }
 
-  // 1. Overview KPI Cards (8 Key Business Metrics)
+  // Revenue & Business Accounting Cards (10 requested metrics)
   const kpiCards = [
     {
-      title: "Total Revenue",
-      value: formatCurrency(revenue?.totalRevenue),
+      title: "Gross Sales",
+      value: revenue?.grossSales != null ? formatCurrency(revenue.grossSales) : revenue?.totalRevenue != null ? formatCurrency(revenue.totalRevenue) : "--",
       icon: DollarSign,
       colorBg: "bg-blue-50 dark:bg-blue-950/60",
       textColor: "text-blue-600 dark:text-blue-400",
       link: "/admin-dashboard/analytics/revenue",
     },
     {
-      title: "Today's Revenue",
-      value: formatCurrency(revenue?.todayRevenue),
-      icon: Calendar,
-      colorBg: "bg-indigo-50 dark:bg-indigo-950/60",
-      textColor: "text-indigo-600 dark:text-indigo-400",
+      title: "Net Profit",
+      value: revenue?.netProfit != null ? formatCurrency(revenue.netProfit) : "--",
+      icon: TrendingUp,
+      colorBg: "bg-emerald-50 dark:bg-emerald-950/60",
+      textColor: "text-emerald-600 dark:text-emerald-400",
       link: "/admin-dashboard/analytics/revenue",
     },
     {
-      title: "Total Orders",
-      value: formatNumber(orders?.totalOrders),
-      icon: ShoppingBag,
-      colorBg: "bg-emerald-50 dark:bg-emerald-950/60",
-      textColor: "text-emerald-600 dark:text-emerald-400",
-      link: "/admin-dashboard/orders",
-    },
-    {
-      title: "Pending Orders",
-      value: formatNumber(orders?.pendingOrders),
-      icon: Clock,
-      colorBg: "bg-amber-50 dark:bg-amber-950/60",
-      textColor: "text-amber-600 dark:text-amber-400",
-      link: "/admin-dashboard/orders",
-    },
-    {
-      title: "Delivered Orders",
-      value: formatNumber(orders?.deliveredOrders),
-      icon: CheckCircle2,
-      colorBg: "bg-teal-50 dark:bg-teal-950/60",
-      textColor: "text-teal-600 dark:text-teal-400",
-      link: "/admin-dashboard/orders",
-    },
-    {
-      title: "Total Customers",
-      value: formatNumber(customers?.totalCustomers),
-      icon: Users,
-      colorBg: "bg-orange-50 dark:bg-orange-950/60",
-      textColor: "text-orange-600 dark:text-orange-400",
-      link: "/admin-dashboard/customers",
-    },
-    {
-      title: "Total Products",
-      value: formatNumber(products?.totalProducts),
+      title: "Product Cost",
+      value: revenue?.productCost != null ? formatCurrency(revenue.productCost) : revenue?.totalCost != null ? formatCurrency(revenue.totalCost) : "--",
       icon: Package,
       colorBg: "bg-violet-50 dark:bg-violet-950/60",
       textColor: "text-violet-600 dark:text-violet-400",
       link: "/admin-dashboard/products",
     },
     {
-      title: "Featured Products",
-      value: formatNumber(products?.featuredProducts),
-      icon: Star,
-      colorBg: "bg-pink-50 dark:bg-pink-950/60",
-      textColor: "text-pink-600 dark:text-pink-400",
+      title: "Courier Cost",
+      value: revenue?.courierCost != null ? formatCurrency(revenue.courierCost) : revenue?.totalCourierCost != null ? formatCurrency(revenue.totalCourierCost) : revenue?.courierServiceCost != null ? formatCurrency(revenue.courierServiceCost) : "--",
+      icon: Truck,
+      colorBg: "bg-amber-50 dark:bg-amber-950/60",
+      textColor: "text-amber-600 dark:text-amber-400",
+      link: "/admin-dashboard/orders",
+    },
+    {
+      title: "Courier Profit",
+      value: revenue?.courierProfit != null ? formatCurrency(revenue.courierProfit) : "--",
+      icon: Coins,
+      colorBg: "bg-indigo-50 dark:bg-indigo-950/60",
+      textColor: "text-indigo-600 dark:text-indigo-400",
+      link: "/admin-dashboard/orders",
+    },
+    {
+      title: "Today's Gross Sales",
+      value: revenue?.todaySales != null ? formatCurrency(revenue.todaySales) : revenue?.todayRevenue != null ? formatCurrency(revenue.todayRevenue) : "--",
+      icon: Calendar,
+      colorBg: "bg-sky-50 dark:bg-sky-950/60",
+      textColor: "text-sky-600 dark:text-sky-400",
+      link: "/admin-dashboard/analytics/revenue",
+    },
+    {
+      title: "Today's Profit",
+      value: revenue?.todayProfit != null ? formatCurrency(revenue.todayProfit) : "--",
+      icon: TrendingUp,
+      colorBg: "bg-teal-50 dark:bg-teal-950/60",
+      textColor: "text-teal-600 dark:text-teal-400",
+      link: "/admin-dashboard/analytics/revenue",
+    },
+    {
+      title: "Today's Product Cost",
+      value: revenue?.todayProductCost != null ? formatCurrency(revenue.todayProductCost) : revenue?.todayCost != null ? formatCurrency(revenue.todayCost) : "--",
+      icon: Package,
+      colorBg: "bg-rose-50 dark:bg-rose-950/60",
+      textColor: "text-rose-600 dark:text-rose-400",
       link: "/admin-dashboard/products",
+    },
+    {
+      title: "Today's Courier Cost",
+      value: revenue?.todayCourierCost != null ? formatCurrency(revenue.todayCourierCost) : "--",
+      icon: Truck,
+      colorBg: "bg-purple-50 dark:bg-purple-950/60",
+      textColor: "text-purple-600 dark:text-purple-400",
+      link: "/admin-dashboard/orders",
+    },
+    {
+      title: "Today's Quantity Sold",
+      value: revenue?.todayQuantitySold != null ? formatNumber(revenue.todayQuantitySold) : revenue?.todayQuantity != null ? formatNumber(revenue.todayQuantity) : "--",
+      icon: ShoppingBag,
+      colorBg: "bg-amber-50 dark:bg-amber-950/60",
+      textColor: "text-amber-600 dark:text-amber-400",
+      link: "/admin-dashboard/orders",
     },
   ];
 
@@ -204,8 +225,8 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* SECTION 1: Overview KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* SECTION 1: Revenue & Accounting Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {kpiCards.map((card, idx) => (
           <StatCard
             key={idx}
@@ -219,8 +240,11 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* SECTION 2: Revenue Overview (Small 7-Day Line Chart) */}
-      <RevenueOverview revenueChart={chartsQuery.data?.revenueChart} />
+      {/* SECTION 2: Business Summary Section */}
+      <BusinessSummarySection overview={overview} />
+
+      {/* SECTION 3: Daily Analytics Charts (5 Daily Backend Charts) */}
+      <DailyAnalyticsChartsSection chartsData={chartsQuery.data} />
 
       {/* SECTION 3 & 4 Grid: Recent Orders & Recent Payments */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

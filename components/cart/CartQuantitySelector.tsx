@@ -137,3 +137,4 @@ export const CartQuantitySelector: React.FC<CartQuantitySelectorProps> = ({
 };
 
 export default CartQuantitySelector;
+

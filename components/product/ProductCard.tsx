@@ -9,6 +9,7 @@ import {
   getProductTitle,
   getProductCategoryName,
   getProductMainImage,
+  getProductDisplayPrice,
 } from '@/types/product';
 import ProductPrice from './ProductPrice';
 import ProductQuickViewModal from './ProductQuickViewModal';
@@ -88,8 +89,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
         (status === 401
           ? 'Please log in to add items to your cart.'
           : status === 400
-          ? 'Unable to add product. Please check product availability.'
-          : 'Failed to add item to cart. Please try again.');
+            ? 'Unable to add product. Please check product availability.'
+            : 'Failed to add item to cart. Please try again.');
 
       Swal.fire({
         icon: 'error',
@@ -122,7 +123,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
     e.preventDefault();
     e.stopPropagation();
 
-    const unitPrice = product.customerSellPrice ?? product.salePrice ?? product.price ?? 0;
+    const unitPrice = getProductDisplayPrice(product);
     saveBuyNowItem({
       productId: product.id,
       title: title,
@@ -273,3 +274,4 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
 };
 
 export default ProductCard;
+

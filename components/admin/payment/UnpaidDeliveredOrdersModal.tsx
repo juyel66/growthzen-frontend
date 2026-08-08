@@ -16,7 +16,7 @@ interface UnpaidDeliveredOrdersModalProps {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -247,3 +247,4 @@ export const UnpaidDeliveredOrdersModal: React.FC<UnpaidDeliveredOrdersModalProp
     </div>
   );
 };
+

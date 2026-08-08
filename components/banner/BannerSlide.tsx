@@ -31,3 +31,4 @@ export const BannerSlide: React.FC<BannerSlideProps> = ({ banner }) => {
   );
 };
 export default BannerSlide;
+

@@ -123,3 +123,4 @@ function ForgotPasswordContent() {
     </div>
   );
 }
+

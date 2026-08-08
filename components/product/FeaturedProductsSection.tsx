@@ -54,3 +54,4 @@ export const FeaturedProductsSection: React.FC = () => {
 };
 
 export default FeaturedProductsSection;
+

@@ -21,7 +21,7 @@ export default function CampaignsTable() {
       name: "Summer Sale 2024",
       status: "active",
       platforms: ["facebook", "google", "tiktok"],
-      spend: "$1,245",
+      spend: "৳1,245",
       performance: { impressions: "324K", ctr: "3.8%" },
     },
     {
@@ -29,7 +29,7 @@ export default function CampaignsTable() {
       name: "Product Launch - New Collection",
       status: "active",
       platforms: ["facebook", "google", "tiktok"],
-      spend: "$1,245",
+      spend: "৳1,245",
       performance: { impressions: "324K", ctr: "3.8%" },
     },
     {
@@ -37,7 +37,7 @@ export default function CampaignsTable() {
       name: "Summer Sale 2024",
       status: "paused",
       platforms: ["facebook", "google", "tiktok"],
-      spend: "$1,245",
+      spend: "৳1,245",
       performance: { impressions: "324K", ctr: "3.8%" },
     },
     {
@@ -45,7 +45,7 @@ export default function CampaignsTable() {
       name: "Summer Sale 2024",
       status: "draft",
       platforms: ["facebook", "google", "tiktok"],
-      spend: "$1,245",
+      spend: "৳1,245",
       performance: { impressions: "324K", ctr: "3.8%" },
     },
     {
@@ -53,7 +53,7 @@ export default function CampaignsTable() {
       name: "Holiday Promo 2024",
       status: "active",
       platforms: ["facebook", "google", "tiktok"],
-      spend: "$2,100",
+      spend: "৳2,100",
       performance: { impressions: "420K", ctr: "4.1%" },
     },
     {
@@ -61,7 +61,7 @@ export default function CampaignsTable() {
       name: "Back to School",
       status: "paused",
       platforms: ["facebook", "google", "tiktok"],
-      spend: "$980",
+      spend: "৳980",
       performance: { impressions: "210K", ctr: "2.9%" },
     },
   ];
@@ -422,3 +422,4 @@ export default function CampaignsTable() {
     </div>
   );
 }
+

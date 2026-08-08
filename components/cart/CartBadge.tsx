@@ -37,3 +37,4 @@ export const CartBadge: React.FC<CartBadgeProps> = ({ className = '' }) => {
 };
 
 export default CartBadge;
+

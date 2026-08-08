@@ -12,12 +12,15 @@ import {
   Hash,
 } from "lucide-react";
 
+import { PaymentTableSkeletonRow } from "@/components/ui/TableSkeleton";
+
 interface PaymentTableProps {
   payments: PaymentView[];
   onOpenDetailsModal: (payment: PaymentView) => void;
   onOpenApproveModal: (payment: PaymentView) => void;
   onOpenRejectModal: (payment: PaymentView) => void;
   onOpenRefundModal: (payment: PaymentView) => void;
+  isLoading?: boolean;
 }
 
 const getPaymentCollectedBadge = (status: string | null) => {
@@ -84,7 +87,7 @@ const getPaymentMethodBadge = (method: string | null) => {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -105,6 +108,7 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
   onOpenApproveModal,
   onOpenRejectModal,
   onOpenRefundModal,
+  isLoading = false,
 }) => {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xs overflow-hidden">
@@ -123,7 +127,11 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {payments.length > 0 ? (
+            {isLoading ? (
+              Array.from({ length: 10 }).map((_, idx) => (
+                <PaymentTableSkeletonRow key={idx} />
+              ))
+            ) : payments.length > 0 ? (
               payments.map((item) => {
                 const status = (item.status || "").toUpperCase();
                 const isPending = status === "PENDING";
@@ -287,3 +295,4 @@ export const PaymentTable: React.FC<PaymentTableProps> = ({
     </div>
   );
 };
+

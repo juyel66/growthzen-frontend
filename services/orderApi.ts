@@ -3,6 +3,7 @@ import { cartApi } from './cartApi';
 import {
   OrderListResponse,
   OrderQueryParams,
+  OrderSummaryData,
   OrderView,
   OrderStatus,
 } from '@/types/order';
@@ -94,11 +95,24 @@ export const orderApi = baseApi.injectEndpoints({
       },
     }),
 
-    updateOrderStatus: builder.mutation<OrderView, { id: string; status: OrderStatus | string; adminNote?: string | null }>({
-      query: ({ id, status, adminNote }) => ({
+    updateOrderStatus: builder.mutation<
+      OrderView,
+      {
+        id: string;
+        status: OrderStatus | string;
+        adminNote?: string | null;
+        courierServiceCost?: number | null;
+        courierCost?: number | null;
+      }
+    >({
+      query: ({ id, status, adminNote, courierServiceCost, courierCost }) => ({
         url: `/orders/${id}/status`,
         method: 'PATCH',
-        body: { status, adminNote },
+        body: {
+          status,
+          adminNote,
+          courierServiceCost: courierServiceCost ?? courierCost,
+        },
       }),
       invalidatesTags: (result, error, { id }) => [
         'Orders',
@@ -118,13 +132,36 @@ export const orderApi = baseApi.injectEndpoints({
         'Dashboard',
       ],
     }),
+
+    getOrderSummary: builder.query<OrderSummaryData, OrderQueryParams | void>({
+      query: (params) => ({
+        url: '/orders/summary',
+        method: 'GET',
+        params: params || undefined,
+      }),
+      transformResponse: (response: { data?: OrderSummaryData } | OrderSummaryData) => {
+        return (response as { data?: OrderSummaryData })?.data ?? (response as OrderSummaryData);
+      },
+      providesTags: ['Orders'],
+    }),
+
+    getOrderInvoice: builder.query<any, string>({
+      query: (id) => `/orders/${id}/invoice`,
+      transformResponse: (response: any) => {
+        return response?.data ?? response;
+      },
+      providesTags: (result, error, id) => [{ type: 'Orders', id }],
+    }),
   }),
   overrideExisting: true,
 });
 
 export const {
   useGetOrdersQuery,
+  useGetOrderSummaryQuery,
   useGetOrderByIdQuery,
+  useGetOrderInvoiceQuery,
+  useLazyGetOrderInvoiceQuery,
   useTrackOrderQuery,
   useCreateOrderMutation,
   useUpdateOrderStatusMutation,

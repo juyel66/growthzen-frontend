@@ -126,7 +126,7 @@ export const SystemSettingsSection: React.FC = () => {
   // Format field labels nicely (e.g., storeEmail -> Store Email)
   const formatLabel = (key: string) => {
     return key
-      .replace(/([A-Z])/g, " $1")
+      .replace(/([A-Z])/g, " ৳1")
       .replace(/^./, (str) => str.toUpperCase())
       .trim();
   };
@@ -346,3 +346,4 @@ export const SystemSettingsSection: React.FC = () => {
     </form>
   );
 };
+

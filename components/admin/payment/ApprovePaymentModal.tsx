@@ -52,7 +52,7 @@ export const ApprovePaymentModal: React.FC<ApprovePaymentModalProps> = ({
 
           <div className="space-y-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl">
             <p>Method: <span className="font-bold">{payment.method}</span></p>
-            <p>Amount: <span className="font-bold text-emerald-600">${payment.paidAmount || payment.totalAmount}</span></p>
+            <p>Amount: <span className="font-bold text-emerald-600">৳{payment.paidAmount || payment.totalAmount}</span></p>
             {payment.transactionId && <p>Transaction ID: <span className="font-mono">{payment.transactionId}</span></p>}
           </div>
 
@@ -77,3 +77,4 @@ export const ApprovePaymentModal: React.FC<ApprovePaymentModalProps> = ({
     </div>
   );
 };
+

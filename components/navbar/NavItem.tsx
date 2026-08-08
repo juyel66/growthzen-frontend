@@ -40,3 +40,4 @@ export const NavItem: React.FC<NavItemProps> = ({ href, label, onClick }) => {
   );
 };
 export default NavItem;
+

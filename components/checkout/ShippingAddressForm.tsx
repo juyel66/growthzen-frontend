@@ -4,6 +4,7 @@ import React from 'react';
 import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from 'react-hook-form';
 import { AddressType } from '@/types/shipping';
 import { MapPin, Phone, User, Home, Briefcase, Tag, Check, Truck, FileText } from 'lucide-react';
+import { isValidBDMobileNumber } from '@/utils/phoneValidation';
 
 export interface ShippingFormValues {
   recipientName: string;
@@ -83,10 +84,8 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
             placeholder="01XXXXXXXXX"
             {...register('phone', {
               required: 'Mobile number is required',
-              pattern: {
-                value: /^(\+?88)?01[3-9]\d{8}$/,
-                message: 'Enter a valid Bangladeshi mobile number (11 digits)',
-              },
+              validate: (val) =>
+                isValidBDMobileNumber(val) || 'Enter a valid Bangladeshi mobile number (e.g. 01700000000)',
             })}
             className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
               errors.phone
@@ -240,4 +239,5 @@ export const ShippingAddressForm: React.FC<ShippingAddressFormProps> = ({
 };
 
 export default ShippingAddressForm;
+
 

@@ -30,3 +30,4 @@ export const ProductStatus: React.FC<ProductStatusProps> = ({ register }) => {
 };
 
 export default ProductStatus;
+

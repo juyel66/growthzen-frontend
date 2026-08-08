@@ -35,7 +35,7 @@ const couponFormSchema = z
       .min(3, "Code must be at least 3 characters")
       .max(50, "Code cannot exceed 50 characters")
       .regex(
-        /^[A-Za-z0-9_-]+$/,
+        /^[A-Za-z0-9_-]+৳/,
         "Code can only contain letters, numbers, hyphens, and underscores"
       ),
     description: z.string().trim().max(1000).optional(),
@@ -204,8 +204,8 @@ export const CouponModal: React.FC<CouponModalProps> = ({
           couponToEdit.scope === "SPECIFIC_PRODUCT"
             ? "SPECIFIC_PRODUCT"
             : couponToEdit.scope === "SPECIFIC_CATEGORY" || couponToEdit.scope === "category"
-            ? "SPECIFIC_CATEGORY"
-            : "ENTIRE_ORDER";
+              ? "SPECIFIC_CATEGORY"
+              : "ENTIRE_ORDER";
 
         reset({
           code: couponToEdit.code,
@@ -403,7 +403,7 @@ export const CouponModal: React.FC<CouponModalProps> = ({
             </label>
             <textarea
               rows={2}
-              placeholder="e.g. 20% discount on all fashion items above $100"
+              placeholder="e.g. 20% discount on all fashion items above ৳100"
               {...register("description")}
               className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 transition resize-none"
             />
@@ -461,7 +461,7 @@ export const CouponModal: React.FC<CouponModalProps> = ({
                   }`}
                 />
                 <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">
-                  {selectedDiscountType === "PERCENTAGE" ? "%" : "$"}
+                  {selectedDiscountType === "PERCENTAGE" ? "%" : "৳"}
                 </span>
               </div>
               {errors.discountValue && (
@@ -474,7 +474,7 @@ export const CouponModal: React.FC<CouponModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Min Order Amount ($) <span className="text-slate-400 font-normal">(Optional)</span>
+                Min Order Amount (৳) <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <input
                 type="number"
@@ -490,7 +490,7 @@ export const CouponModal: React.FC<CouponModalProps> = ({
 
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                Max Discount Cap ($) <span className="text-slate-400 font-normal">(Optional)</span>
+                Max Discount Cap (৳) <span className="text-slate-400 font-normal">(Optional)</span>
               </label>
               <input
                 type="number"
@@ -716,3 +716,4 @@ export const CouponModal: React.FC<CouponModalProps> = ({
 };
 
 export default CouponModal;
+

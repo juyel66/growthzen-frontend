@@ -48,3 +48,4 @@ export const CartSkeleton: React.FC = () => {
 };
 
 export default CartSkeleton;
+

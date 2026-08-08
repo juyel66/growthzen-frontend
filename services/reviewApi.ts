@@ -17,26 +17,26 @@ export const reviewApi = baseApi.injectEndpoints({
           const reviewsList = Array.isArray(response.reviews)
             ? response.reviews
             : Array.isArray(response.data)
-            ? response.data
-            : Array.isArray(response)
-            ? response
-            : [];
+              ? response.data
+              : Array.isArray(response)
+                ? response
+                : [];
 
           const totalReviews =
             typeof response.totalReviews === 'number'
               ? response.totalReviews
               : typeof response.total === 'number'
-              ? response.total
-              : reviewsList.length;
+                ? response.total
+                : reviewsList.length;
 
           const averageRating =
             typeof response.averageRating === 'number'
               ? response.averageRating
               : typeof response.ratingsAverage === 'number'
-              ? response.ratingsAverage
-              : reviewsList.length > 0
-              ? reviewsList.reduce((acc: number, r: any) => acc + (r.rating || 0), 0) / reviewsList.length
-              : 0;
+                ? response.ratingsAverage
+                : reviewsList.length > 0
+                  ? reviewsList.reduce((acc: number, r: any) => acc + (r.rating || 0), 0) / reviewsList.length
+                  : 0;
 
           const dist = response.ratingDistribution || response.breakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
           const ratingDistribution = {
@@ -122,9 +122,9 @@ export const reviewApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Reviews' as const, id })),
-              { type: 'Reviews', id: 'LIST' },
-            ]
+            ...result.map(({ id }) => ({ type: 'Reviews' as const, id })),
+            { type: 'Reviews', id: 'LIST' },
+          ]
           : [{ type: 'Reviews', id: 'LIST' }],
     }),
 

@@ -80,3 +80,4 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
 };
 
 export default CheckoutSidebar;
+

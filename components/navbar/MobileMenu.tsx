@@ -24,9 +24,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const { data: cartData } = useGetCartQuery(undefined, { skip: !isAuthenticated });
   const cartCount = isAuthenticated
     ? cartData?.summary?.totalQuantity ??
-      cartData?.totalQuantity ??
-      cartData?.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) ??
-      0
+    cartData?.totalQuantity ??
+    cartData?.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) ??
+    0
     : 0;
 
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -165,7 +165,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                           <ChevronRight className="w-4 h-4 text-slate-400" />
                         )}
                       </button>
-                      
+
                       <AnimatePresence initial={false}>
                         {isExpanded && (
                           <motion.div
@@ -206,3 +206,4 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   );
 };
 export default MobileMenu;
+

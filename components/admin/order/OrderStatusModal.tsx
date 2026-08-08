@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { OrderView, OrderStatus } from "@/types/order";
 import { X, CheckCircle, AlertTriangle, Loader2 } from "lucide-react";
 
+import { ORDER_STATUS } from "@/constants/orderStatus";
+
 interface OrderStatusModalProps {
   order: OrderView | null;
   isOpen: boolean;
@@ -13,14 +15,14 @@ interface OrderStatusModalProps {
 }
 
 const STATUSES: { label: string; value: OrderStatus }[] = [
-  { label: "Pending", value: "PENDING" },
-  { label: "Confirmed", value: "CONFIRMED" },
-  { label: "Processing", value: "PROCESSING" },
-  { label: "Packed", value: "PACKED" },
-  { label: "Shipped", value: "SHIPPED" },
-  { label: "Delivered", value: "DELIVERED" },
-  { label: "Cancelled", value: "CANCELLED" },
-  { label: "Returned", value: "RETURNED" },
+  { label: "Pending", value: ORDER_STATUS.PENDING },
+  { label: "Confirmed", value: ORDER_STATUS.CONFIRMED },
+  { label: "Processing", value: ORDER_STATUS.PROCESSING },
+  { label: "Packed", value: ORDER_STATUS.PACKED },
+  { label: "Shipped", value: ORDER_STATUS.SHIPPED },
+  { label: "Delivered", value: ORDER_STATUS.DELIVERED },
+  { label: "Cancelled", value: ORDER_STATUS.CANCELLED },
+  { label: "Returned", value: ORDER_STATUS.RETURNED },
 ];
 
 export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
@@ -131,11 +133,10 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-xl transition cursor-pointer ${
-                showConfirm
-                  ? "bg-emerald-600 hover:bg-emerald-700"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
+              className={`flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-xl transition cursor-pointer ${showConfirm
+                ? "bg-emerald-600 hover:bg-emerald-700"
+                : "bg-blue-600 hover:bg-blue-700"
+                }`}
             >
               {isLoading ? (
                 <>
@@ -157,3 +158,4 @@ export const OrderStatusModal: React.FC<OrderStatusModalProps> = ({
     </div>
   );
 };
+

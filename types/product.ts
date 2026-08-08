@@ -36,13 +36,19 @@ export interface Product {
   categoryDetails?: ProductCategoryDetails | null;
   costPrice?: number;
   customerSellPrice?: number;
+  customerSpecialPrice?: number | null;
   price?: number;
   originalPrice?: number;
   categoryDiscount?: number;
   discountAmount?: number;
   finalPrice?: number;
+  displayPrice?: number;
   resellerPrice?: number;
+  resellerSellPrice?: number;
+  resellerSpecialPrice?: number | null;
   salePrice?: number | null;
+  customerSpecialPriceEnabled?: boolean;
+  resellerSpecialPriceEnabled?: boolean;
   specialSaleEnabled?: boolean;
   discountEnabled?: boolean;
   discountType?: string | null;
@@ -115,8 +121,8 @@ export function formatImageUrl(url: string | null | undefined, fallback: string 
     return trimmed;
   }
 
-  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-  const backendBase = rawApiUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://growthzen-it-backend.onrender.com/api';
+  const backendBase = rawApiUrl.replace(/\/api\/?৳/i, '').replace(/\/+৳/, '');
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${backendBase}${cleanPath}`;
 }
@@ -182,19 +188,44 @@ export function getProductGalleryImages(product: Product, fallback: string = '/p
   return list;
 }
 
-export function getProductFinalPrice(product: Product): number {
+export function getProductDisplayPrice(product: Product, isReseller: boolean = false): number {
+  if (product.displayPrice !== undefined && product.displayPrice !== null) return Number(product.displayPrice);
   if (product.finalPrice !== undefined && product.finalPrice !== null) return Number(product.finalPrice);
-  if (product.customerSellPrice !== undefined && product.customerSellPrice !== null) return Number(product.customerSellPrice);
-  if (product.salePrice !== undefined && product.salePrice !== null) return Number(product.salePrice);
-  if (product.price !== undefined && product.price !== null) return Number(product.price);
+
+  if (isReseller) {
+    if (product.resellerSpecialPrice !== undefined && product.resellerSpecialPrice !== null && Number(product.resellerSpecialPrice) > 0) {
+      return Number(product.resellerSpecialPrice);
+    }
+    if (product.resellerSellPrice !== undefined && product.resellerSellPrice !== null) return Number(product.resellerSellPrice);
+    if (product.resellerPrice !== undefined && product.resellerPrice !== null) return Number(product.resellerPrice);
+  } else {
+    if (product.customerSpecialPrice !== undefined && product.customerSpecialPrice !== null && Number(product.customerSpecialPrice) > 0) {
+      return Number(product.customerSpecialPrice);
+    }
+    if (product.salePrice !== undefined && product.salePrice !== null && Number(product.salePrice) > 0) {
+      return Number(product.salePrice);
+    }
+    if (product.customerSellPrice !== undefined && product.customerSellPrice !== null) return Number(product.customerSellPrice);
+    if (product.price !== undefined && product.price !== null) return Number(product.price);
+  }
   return 0;
 }
 
-export function getProductOriginalPrice(product: Product): number {
-  if (product.originalPrice !== undefined && product.originalPrice !== null) return Number(product.originalPrice);
+export function getProductFinalPrice(product: Product, isReseller: boolean = false): number {
+  return getProductDisplayPrice(product, isReseller);
+}
+
+export function getProductOriginalPrice(product: Product, isReseller: boolean = false): number {
+  if (isReseller) {
+    if (product.resellerSellPrice !== undefined && product.resellerSellPrice !== null) return Number(product.resellerSellPrice);
+    if (product.resellerPrice !== undefined && product.resellerPrice !== null) return Number(product.resellerPrice);
+    if (product.originalPrice !== undefined && product.originalPrice !== null) return Number(product.originalPrice);
+    return getProductDisplayPrice(product, isReseller);
+  }
   if (product.customerSellPrice !== undefined && product.customerSellPrice !== null) return Number(product.customerSellPrice);
+  if (product.originalPrice !== undefined && product.originalPrice !== null) return Number(product.originalPrice);
   if (product.price !== undefined && product.price !== null) return Number(product.price);
-  return getProductFinalPrice(product);
+  return getProductDisplayPrice(product, isReseller);
 }
 
 export function getProductDiscountAmount(product: Product): number {

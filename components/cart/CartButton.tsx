@@ -40,3 +40,4 @@ export const CartButton: React.FC<CartButtonProps> = ({
 };
 
 export default CartButton;
+

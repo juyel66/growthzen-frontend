@@ -1,6 +1,19 @@
 import { baseApi } from './baseApi';
 import { Product, ProductResponse, QueryParams } from '@/types/product';
 
+export interface ProductIdentifiersResponse {
+  productCode?: string;
+  sku?: string;
+  barcode?: string;
+  ean?: string;
+  data?: {
+    productCode?: string;
+    sku?: string;
+    barcode?: string;
+    ean?: string;
+  };
+}
+
 export const productApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getProducts: builder.query<Product[], QueryParams | void>({
@@ -27,6 +40,19 @@ export const productApi = baseApi.injectEndpoints({
         return response;
       },
       providesTags: (result, error, id) => [{ type: 'Products', id }],
+    }),
+    generateIdentifiers: builder.query<
+      ProductIdentifiersResponse,
+      { categoryId?: string; type?: 'sku' | 'barcode' | 'all' } | void
+    >({
+      query: (params) => ({
+        url: '/products/generate-identifiers',
+        method: 'GET',
+        params: params || undefined,
+      }),
+      transformResponse: (response: any) => {
+        return response?.data ?? response;
+      },
     }),
     createProduct: builder.mutation<Product, FormData | Partial<Product>>({
       query: (body) => ({
@@ -61,6 +87,8 @@ export const productApi = baseApi.injectEndpoints({
 export const {
   useGetProductsQuery,
   useGetProductByIdQuery,
+  useGenerateIdentifiersQuery,
+  useLazyGenerateIdentifiersQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,

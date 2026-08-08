@@ -33,7 +33,8 @@ export const HeroBanner = () => {
       }}
     >
       {/* Styles for dynamic pagination bullets matching primary theme color */}
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .swiper-pagination-custom .swiper-pagination-bullet {
           width: 8px;
           height: 8px;
@@ -99,3 +100,4 @@ export const HeroBanner = () => {
   );
 };
 export default HeroBanner;
+

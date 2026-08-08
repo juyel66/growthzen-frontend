@@ -33,3 +33,4 @@ export const BannerImage: React.FC<BannerImageProps> = ({ src, alt }) => {
   );
 };
 export default BannerImage;
+

@@ -99,3 +99,4 @@ export const UploadProgress: React.FC<UploadProgressProps> = ({
 };
 
 export default UploadProgress;
+

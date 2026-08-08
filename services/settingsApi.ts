@@ -65,9 +65,9 @@ export const settingsApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Banners' as const, id })),
-              { type: 'Banners', id: 'LIST' },
-            ]
+            ...result.map(({ id }) => ({ type: 'Banners' as const, id })),
+            { type: 'Banners', id: 'LIST' },
+          ]
           : [{ type: 'Banners', id: 'LIST' }],
     }),
 
@@ -157,9 +157,9 @@ export const settingsApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ categoryId }) => ({ type: 'CategoryDiscounts' as const, id: categoryId })),
-              { type: 'CategoryDiscounts', id: 'LIST' },
-            ]
+            ...result.map(({ categoryId }) => ({ type: 'CategoryDiscounts' as const, id: categoryId })),
+            { type: 'CategoryDiscounts', id: 'LIST' },
+          ]
           : [{ type: 'CategoryDiscounts', id: 'LIST' }],
     }),
 

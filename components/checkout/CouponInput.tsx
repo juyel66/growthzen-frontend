@@ -52,7 +52,7 @@ export const CouponInput: React.FC<CouponInputProps> = ({
         Swal.fire({
           icon: 'success',
           title: 'Coupon Applied!',
-          text: res.message || `Coupon ${trimmedCode} applied successfully. You saved $${discountAmt.toFixed(2)}!`,
+          text: res.message || `Coupon ${trimmedCode} applied successfully. You saved ৳${discountAmt.toFixed(2)}!`,
           toast: true,
           position: 'top-end',
           showConfirmButton: false,
@@ -136,3 +136,4 @@ export const CouponInput: React.FC<CouponInputProps> = ({
 };
 
 export default CouponInput;
+

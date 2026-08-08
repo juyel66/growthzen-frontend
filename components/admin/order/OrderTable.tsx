@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
+import { OrderActionButtons } from "./OrderActionButtons";
 import { OrderView } from "@/types/order";
 import {
   Eye,
@@ -12,11 +12,14 @@ import {
   UserX,
 } from "lucide-react";
 
+import { OrderTableSkeletonRow } from "@/components/ui/TableSkeleton";
+
 interface OrderTableProps {
   orders: OrderView[];
   onOpenStatusModal: (order: OrderView) => void;
   onOpenTrackModal: (order: OrderView) => void;
   onCancelOrder: (order: OrderView) => void;
+  isLoading?: boolean;
 }
 
 const getOrderStatusBadge = (status: string | null) => {
@@ -93,7 +96,7 @@ const getPaymentCollectedBadge = (orderStatus: string, paymentStatus: string | n
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -111,6 +114,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({
   onOpenStatusModal,
   onOpenTrackModal,
   onCancelOrder,
+  isLoading = false,
 }) => {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xs overflow-hidden">
@@ -124,16 +128,24 @@ export const OrderTable: React.FC<OrderTableProps> = ({
               <th className="p-3.5">Grand Total</th>
               <th className="p-3.5">Payment</th>
               <th className="p-3.5">Order Status</th>
+              <th className="p-3.5">Courier Cost</th>
+              <th className="p-3.5">Net Profit</th>
               <th className="p-3.5">Date</th>
               <th className="p-3.5 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {orders.length > 0 ? (
+            {isLoading ? (
+              Array.from({ length: 10 }).map((_, idx) => (
+                <OrderTableSkeletonRow key={idx} />
+              ))
+            ) : orders.length > 0 ? (
               orders.map((item) => {
                 const isGuest = !item.userId || Boolean(item.guestName || item.guestEmail);
                 const isCancellable = item.status === "PENDING";
                 const payStatus = item.payment?.status || (item.paymentMethod === "COD" ? "PENDING" : "PENDING");
+                const isDelivered = (item.status || "").toUpperCase() === "DELIVERED";
+                const courierCostVal = item.courierServiceCost ?? item.courierCost;
 
                 return (
                   <tr
@@ -188,6 +200,16 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                       {getOrderStatusBadge(item.status)}
                     </td>
 
+                    {/* Courier Cost */}
+                    <td className="p-3.5 font-bold text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                      {isDelivered && courierCostVal != null ? formatCurrency(courierCostVal) : "--"}
+                    </td>
+
+                    {/* Net Profit */}
+                    <td className="p-3.5 font-extrabold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                      {isDelivered && item.netProfit != null ? formatCurrency(item.netProfit) : "--"}
+                    </td>
+
                     {/* Date */}
                     <td className="p-3.5 text-slate-500 whitespace-nowrap">
                       {formatDate(item.createdAt)}
@@ -195,49 +217,19 @@ export const OrderTable: React.FC<OrderTableProps> = ({
 
                     {/* Actions */}
                     <td className="p-3.5 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          href={`/admin-dashboard/orders/${item.id}`}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-2xs transition cursor-pointer"
-                          title="View Full Order Details"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>View</span>
-                        </Link>
-
-                        <button
-                          onClick={() => onOpenStatusModal(item)}
-                          className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer"
-                          title="Update Status"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          onClick={() => onOpenTrackModal(item)}
-                          className="p-1.5 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer"
-                          title="Track Progress"
-                        >
-                          <Truck className="w-3.5 h-3.5" />
-                        </button>
-
-                        {isCancellable && (
-                          <button
-                            onClick={() => onCancelOrder(item)}
-                            className="p-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 dark:bg-rose-950/60 dark:text-rose-400 transition cursor-pointer"
-                            title="Cancel Order"
-                          >
-                            <XCircle className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
+                      <OrderActionButtons
+                        order={item}
+                        onOpenStatusModal={onOpenStatusModal}
+                        onOpenTrackModal={onOpenTrackModal}
+                        onCancelOrder={onCancelOrder}
+                      />
                     </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={8} className="p-10 text-center text-slate-400">
+                <td colSpan={10} className="p-10 text-center text-slate-400">
                   No orders match the selected filters.
                 </td>
               </tr>
@@ -248,3 +240,4 @@ export const OrderTable: React.FC<OrderTableProps> = ({
     </div>
   );
 };
+

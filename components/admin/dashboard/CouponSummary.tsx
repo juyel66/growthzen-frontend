@@ -120,7 +120,7 @@ export const CouponSummary: React.FC<CouponSummaryProps> = ({
                       {c.code}
                     </span>
                     <span className="text-[10px] text-slate-500">
-                      {isFixed ? `$${c.discountValue}` : `${c.discountValue}%`} OFF
+                      {isFixed ? `৳${c.discountValue}` : `${c.discountValue}%`} OFF
                     </span>
                   </div>
                   <span className="px-2 py-0.5 rounded-md bg-slate-200 dark:bg-slate-800 text-[10px] font-extrabold text-slate-700 dark:text-slate-300">
@@ -135,3 +135,4 @@ export const CouponSummary: React.FC<CouponSummaryProps> = ({
     </div>
   );
 };
+

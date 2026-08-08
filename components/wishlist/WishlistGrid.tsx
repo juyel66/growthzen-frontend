@@ -31,3 +31,4 @@ export const WishlistGrid: React.FC<WishlistGridProps> = ({
 };
 
 export default WishlistGrid;
+

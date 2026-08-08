@@ -65,14 +65,14 @@ export const CartSummary: React.FC<CartSummaryProps> = ({
         {/* Subtotal */}
         <div className="flex items-center justify-between">
           <span>Subtotal</span>
-          <span className="font-bold text-slate-900 dark:text-white">${displaySubtotal.toFixed(2)}</span>
+          <span className="font-bold text-slate-900 dark:text-white">৳{displaySubtotal.toFixed(2)}</span>
         </div>
 
         {/* Discount Savings */}
         {totalDiscount > 0 && (
           <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
             <span>Total Savings & Coupon</span>
-            <span className="font-bold">-${totalDiscount.toFixed(2)}</span>
+            <span className="font-bold">-৳{totalDiscount.toFixed(2)}</span>
           </div>
         )}
       </div>
@@ -102,12 +102,12 @@ export const CartSummary: React.FC<CartSummaryProps> = ({
           <span className="text-base font-extrabold text-slate-900 dark:text-white">Grand Total</span>
           {couponDiscount > 0 && (
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-              Coupon Saved: ${couponDiscount.toFixed(2)}
+              Coupon Saved: ৳{couponDiscount.toFixed(2)}
             </span>
           )}
         </div>
         <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
-          ${displayGrandTotal.toFixed(2)}
+          ৳{displayGrandTotal.toFixed(2)}
         </span>
       </div>
 
@@ -142,3 +142,4 @@ export const CartSummary: React.FC<CartSummaryProps> = ({
 };
 
 export default CartSummary;
+

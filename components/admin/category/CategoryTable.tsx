@@ -93,8 +93,8 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
                 typeof cat.parent === 'object' && cat.parent?.name
                   ? cat.parent.name
                   : typeof cat.parentCategory === 'object' && cat.parentCategory?.name
-                  ? cat.parentCategory.name
-                  : 'Root Category';
+                    ? cat.parentCategory.name
+                    : 'Root Category';
 
               return (
                 <tr key={cat.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
@@ -250,3 +250,4 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
 };
 
 export default CategoryTable;
+

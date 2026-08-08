@@ -9,6 +9,7 @@ import {
   useCreateProductMutation,
   useUpdateProductMutation,
   useGetProductByIdQuery,
+  useLazyGenerateIdentifiersQuery,
 } from '@/services/productApi';
 import { getProductTitle, Product } from '@/types/product';
 import CategorySelector from './CategorySelector';
@@ -60,43 +61,56 @@ export function mapProductToFormValues(prod: Product): ProductFormValues {
     }
   });
 
-    const specialSaleEnabled = Boolean(
-      prod.specialSaleEnabled ??
-        (prod.salePrice !== undefined && prod.salePrice !== null && Number(prod.salePrice) > 0)
-    );
+  const custSpecial =
+    prod.customerSpecialPrice !== undefined && prod.customerSpecialPrice !== null
+      ? prod.customerSpecialPrice
+      : prod.salePrice !== undefined && prod.salePrice !== null
+      ? prod.salePrice
+      : null;
+  const hasCustSpecial = Boolean(custSpecial !== null && Number(custSpecial) > 0);
 
-    const discountEnabled = Boolean(
-      prod.discountEnabled ??
-        (prod.discountValue !== undefined && prod.discountValue !== null && Number(prod.discountValue) > 0)
-    );
+  const resSpecial =
+    prod.resellerSpecialPrice !== undefined && prod.resellerSpecialPrice !== null
+      ? prod.resellerSpecialPrice
+      : null;
+  const hasResSpecial = Boolean(resSpecial !== null && Number(resSpecial) > 0);
 
-    return {
-      title: getProductTitle(prod),
-      shortDescription: prod.shortDescription || '',
-      description: prod.description || '',
-      categoryId: catId,
-      productCode: prod.productCode || prod.sku || '',
-      barcode: prod.barcode || '',
-      costPrice: prod.costPrice !== undefined && prod.costPrice !== null ? (prod.costPrice as any) : '',
-      customerSellPrice: prod.customerSellPrice !== undefined && prod.customerSellPrice !== null ? (prod.customerSellPrice as any) : prod.price !== undefined && prod.price !== null ? (prod.price as any) : '',
-      resellerPrice: prod.resellerPrice !== undefined && prod.resellerPrice !== null ? (prod.resellerPrice as any) : '',
-      specialSaleEnabled,
-      salePrice: specialSaleEnabled && prod.salePrice !== undefined && prod.salePrice !== null ? (prod.salePrice as any) : null,
-      discountEnabled,
-      discountType: (prod.discountType as any) || null,
-      discountValue: prod.discountValue !== undefined && prod.discountValue !== null ? (prod.discountValue as any) : null,
-      taxRate: prod.taxRate !== undefined && prod.taxRate !== null ? (prod.taxRate as any) : null,
-      couponCode: prod.couponCode || null,
-      attributes: Array.isArray(prod.attributes) ? prod.attributes : [],
-      enableSize: Boolean(prod.enableSize),
-      availableSizes: Array.isArray(prod.availableSizes) ? prod.availableSizes : [],
-      status: (prod.status as 'ACTIVE' | 'INACTIVE' | 'DRAFT') || 'ACTIVE',
-      thumbnailImage,
-      productImages: rawGallery,
-      productVideos: Array.isArray(prod.productVideos) ? prod.productVideos : [],
-      isFeatured: Boolean(prod.isFeatured),
-    };
-  }
+  const discountEnabled = Boolean(
+    prod.discountEnabled ??
+    (prod.discountValue !== undefined && prod.discountValue !== null && Number(prod.discountValue) > 0)
+  );
+
+  return {
+    title: getProductTitle(prod),
+    shortDescription: prod.shortDescription || '',
+    description: prod.description || '',
+    categoryId: catId,
+    productCode: prod.productCode || prod.sku || '',
+    barcode: prod.barcode || '',
+    costPrice: prod.costPrice !== undefined && prod.costPrice !== null ? (prod.costPrice as any) : '',
+    customerSellPrice: prod.customerSellPrice !== undefined && prod.customerSellPrice !== null ? (prod.customerSellPrice as any) : prod.price !== undefined && prod.price !== null ? (prod.price as any) : '',
+    enableCustomerSpecialPrice: hasCustSpecial,
+    customerSpecialPrice: hasCustSpecial ? (custSpecial as any) : null,
+    resellerPrice: prod.resellerPrice !== undefined && prod.resellerPrice !== null ? (prod.resellerPrice as any) : '',
+    enableResellerSpecialPrice: hasResSpecial,
+    resellerSpecialPrice: hasResSpecial ? (resSpecial as any) : null,
+    specialSaleEnabled: hasCustSpecial,
+    salePrice: hasCustSpecial ? (custSpecial as any) : null,
+    discountEnabled,
+    discountType: (prod.discountType as any) || null,
+    discountValue: prod.discountValue !== undefined && prod.discountValue !== null ? (prod.discountValue as any) : null,
+    taxRate: prod.taxRate !== undefined && prod.taxRate !== null ? (prod.taxRate as any) : null,
+    couponCode: prod.couponCode || null,
+    attributes: Array.isArray(prod.attributes) ? prod.attributes : [],
+    enableSize: Boolean(prod.enableSize),
+    availableSizes: Array.isArray(prod.availableSizes) ? prod.availableSizes : [],
+    status: (prod.status as 'ACTIVE' | 'INACTIVE' | 'DRAFT') || 'ACTIVE',
+    thumbnailImage,
+    productImages: rawGallery,
+    productVideos: Array.isArray(prod.productVideos) ? prod.productVideos : [],
+    isFeatured: Boolean(prod.isFeatured),
+  };
+}
 
 interface ProductFormProps {
   productId?: string;
@@ -117,6 +131,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
 
   const [createProduct, { isLoading: isCreating }] = useCreateProductMutation();
   const [updateProduct, { isLoading: isUpdating }] = useUpdateProductMutation();
+  const [triggerGenerateIdentifiers, { isLoading: isGeneratingIdentifiers }] = useLazyGenerateIdentifiersQuery();
 
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [isVideoUploading, setIsVideoUploading] = useState(false);
@@ -143,7 +158,11 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
       barcode: '',
       costPrice: '' as any,
       customerSellPrice: '' as any,
+      enableCustomerSpecialPrice: false,
+      customerSpecialPrice: null as any,
       resellerPrice: '' as any,
+      enableResellerSpecialPrice: false,
+      resellerSpecialPrice: null as any,
       specialSaleEnabled: false,
       salePrice: null as any,
       discountEnabled: false,
@@ -161,6 +180,54 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
       isFeatured: false,
     },
   });
+
+  const watchCategoryId = watch('categoryId');
+
+  const fetchIdentifiers = async (catId?: string, type: 'sku' | 'barcode' | 'all' = 'all') => {
+    try {
+      const res = await triggerGenerateIdentifiers({
+        categoryId: catId || undefined,
+        type,
+      }).unwrap();
+
+      const code = res?.productCode || res?.sku || res?.data?.productCode || res?.data?.sku;
+      const codeBarcode = res?.barcode || res?.ean || res?.data?.barcode || res?.data?.ean;
+
+      if ((type === 'all' || type === 'sku') && code) {
+        setValue('productCode', code, { shouldValidate: true, shouldDirty: true });
+      }
+      if ((type === 'all' || type === 'barcode') && codeBarcode) {
+        setValue('barcode', codeBarcode, { shouldValidate: true, shouldDirty: true });
+      }
+    } catch {
+      // Ignore network errors, allow user manual edit
+    }
+  };
+
+  // 1. On page load for Add Product page (!isEdit): generate initial SKU and Barcode
+  useEffect(() => {
+    if (!isEdit) {
+      fetchIdentifiers(watchCategoryId, 'all');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEdit]);
+
+  // 2. On Category change for Add Product page (!isEdit): regenerate SKU & Barcode with category prefix
+  const prevCategoryIdRef = React.useRef(watchCategoryId);
+  useEffect(() => {
+    if (!isEdit && watchCategoryId && watchCategoryId !== prevCategoryIdRef.current) {
+      prevCategoryIdRef.current = watchCategoryId;
+      fetchIdentifiers(watchCategoryId, 'all');
+    }
+  }, [isEdit, watchCategoryId]);
+
+  const handleRefreshSku = () => {
+    fetchIdentifiers(watch('categoryId'), 'sku');
+  };
+
+  const handleRefreshBarcode = () => {
+    fetchIdentifiers(watch('categoryId'), 'barcode');
+  };
 
   useEffect(() => {
     if (isEdit && existingProduct) {
@@ -193,7 +260,8 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
 
       const discountType = data.discountType && String(data.discountType).trim() ? String(data.discountType).trim() : null;
       const discountValue = parseOptionalNumber(data.discountValue);
-      const salePrice = data.specialSaleEnabled ? parseOptionalNumber(data.salePrice) : null;
+      const custSpecial = parseOptionalNumber(data.customerSpecialPrice);
+      const resSpecial = parseOptionalNumber(data.resellerSpecialPrice);
       const taxRate = parseOptionalNumber(data.taxRate);
       const couponCode = data.couponCode && String(data.couponCode).trim() ? String(data.couponCode).trim() : null;
 
@@ -208,11 +276,27 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
 
       formData.append('costPrice', String(Number(data.costPrice)));
       formData.append('customerSellPrice', String(Number(data.customerSellPrice)));
-      formData.append('resellerPrice', String(Number(data.resellerPrice)));
 
-      formData.append('specialSaleEnabled', String(Boolean(data.specialSaleEnabled)));
+      if (data.enableCustomerSpecialPrice && custSpecial !== null && custSpecial > 0) {
+        formData.append('customerSpecialPrice', String(custSpecial));
+        formData.append('salePrice', String(custSpecial));
+        formData.append('specialSaleEnabled', 'true');
+      } else {
+        formData.append('customerSpecialPrice', '');
+        formData.append('salePrice', '');
+        formData.append('specialSaleEnabled', 'false');
+      }
+
+      formData.append('resellerPrice', String(Number(data.resellerPrice)));
+      formData.append('resellerSellPrice', String(Number(data.resellerPrice)));
+
+      if (data.enableResellerSpecialPrice && resSpecial !== null && resSpecial > 0) {
+        formData.append('resellerSpecialPrice', String(resSpecial));
+      } else {
+        formData.append('resellerSpecialPrice', '');
+      }
+
       formData.append('discountEnabled', String(Boolean(data.discountEnabled)));
-      if (salePrice !== null) formData.append('salePrice', String(salePrice));
       if (discountType !== null) formData.append('discountType', discountType);
       if (discountValue !== null) formData.append('discountValue', String(discountValue));
       if (taxRate !== null) formData.append('taxRate', String(taxRate));
@@ -401,7 +485,14 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Columns: Main Details */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <ProductBasicInfo register={register} errors={errors} />
+          <ProductBasicInfo
+            register={register}
+            errors={errors}
+            onRefreshSku={handleRefreshSku}
+            onRefreshBarcode={handleRefreshBarcode}
+            isGeneratingSku={isGeneratingIdentifiers}
+            isGeneratingBarcode={isGeneratingIdentifiers}
+          />
           <PricingSection register={register} errors={errors} watch={watch} />
           <AttributeManager control={control} register={register} errors={errors} />
           <SizeManager register={register} errors={errors} watch={watch} setValue={setValue} />
@@ -444,3 +535,4 @@ export const ProductForm: React.FC<ProductFormProps> = ({ productId }) => {
 };
 
 export default ProductForm;
+

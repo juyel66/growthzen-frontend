@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import SafeImage from '@/components/ui/SafeImage';
 import { useGetProductsQuery, useDeleteProductMutation } from '@/services/productApi';
-import { getProductTitle, getProductCategoryName, getProductMainImage, getProductFinalPrice } from '@/types/product';
+import { getProductTitle, getProductCategoryName, getProductMainImage, getProductDisplayPrice, getProductFinalPrice } from '@/types/product';
 import { RoleGuard } from '@/components/auth/AuthGuards';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Search, Trash2, Eye, Pencil, Package, Sparkles, Tag } from 'lucide-react';
@@ -195,12 +195,7 @@ function AdminProductsContent() {
 
                       {/* Price */}
                       <td className="py-4 px-4 font-extrabold text-slate-900 dark:text-white">
-                        ${Number(price).toFixed(2)}
-                        {p.salePrice && p.salePrice !== price && (
-                          <span className="block text-[11px] font-normal text-rose-500 line-through">
-                            ${Number(p.salePrice).toFixed(2)}
-                          </span>
-                        )}
+                        ৳{getProductDisplayPrice(p).toFixed(2)}
                       </td>
 
                       {/* Status Badge */}

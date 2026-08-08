@@ -40,3 +40,4 @@ export const removeAccessToken = (): void => {
     console.error('Failed to remove access token from sessionStorage:', error);
   }
 };
+

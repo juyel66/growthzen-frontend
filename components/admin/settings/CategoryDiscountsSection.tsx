@@ -266,3 +266,4 @@ export const CategoryDiscountsSection: React.FC = () => {
     </div>
   );
 };
+

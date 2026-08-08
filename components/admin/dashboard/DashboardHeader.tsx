@@ -100,10 +100,10 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <span className="font-semibold text-slate-700 dark:text-slate-300">
                 {lastUpdated
                   ? lastUpdated.toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })
                   : "Just now"}
               </span>
             </div>
@@ -217,3 +217,4 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     </div>
   );
 };
+

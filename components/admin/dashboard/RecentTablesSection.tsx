@@ -55,7 +55,7 @@ const getStatusBadge = (status: string | null) => {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -709,3 +709,4 @@ export const RecentTablesSection: React.FC<RecentTablesSectionProps> = ({
     </div>
   );
 };
+

@@ -18,12 +18,13 @@ interface PaymentSummaryCardsProps {
   totalRefunds: number;
   activeStatusFilter: string;
   onSelectStatusFilter: (status: string) => void;
+  isLoading?: boolean;
 }
 
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -33,6 +34,7 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({
   totalRefunds,
   activeStatusFilter,
   onSelectStatusFilter,
+  isLoading = false,
 }) => {
   const cards = [
     {
@@ -88,9 +90,13 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider block opacity-80">
               Total Revenue Collected (Paid)
             </span>
-            <span className="text-3xl font-black mt-1 block">
-              {formatCurrency(totalRevenue)}
-            </span>
+            {isLoading ? (
+              <div className="h-8 w-32 rounded-md animate-shimmer mt-1" />
+            ) : (
+              <span className="text-3xl font-black mt-1 block">
+                {formatCurrency(totalRevenue)}
+              </span>
+            )}
           </div>
           <DollarSign className="w-9 h-9 opacity-40 text-emerald-600 dark:text-emerald-400" />
         </div>
@@ -100,9 +106,13 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({
             <span className="text-xs font-bold uppercase tracking-wider block opacity-80">
               Total Refund Amount Issued
             </span>
-            <span className="text-3xl font-black mt-1 block">
-              {formatCurrency(totalRefunds)}
-            </span>
+            {isLoading ? (
+              <div className="h-8 w-32 rounded-md animate-shimmer mt-1" />
+            ) : (
+              <span className="text-3xl font-black mt-1 block">
+                {formatCurrency(totalRefunds)}
+              </span>
+            )}
           </div>
           <TrendingDown className="w-9 h-9 opacity-40 text-purple-600 dark:text-purple-400" />
         </div>
@@ -130,7 +140,11 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({
                 </span>
                 <Icon className="w-4 h-4" />
               </div>
-              <span className="text-2xl font-black mt-2">{c.count}</span>
+              {isLoading ? (
+                <div className="h-7 w-12 rounded-md animate-shimmer mt-2" />
+              ) : (
+                <span className="text-2xl font-black mt-2">{c.count}</span>
+              )}
             </button>
           );
         })}
@@ -138,3 +152,4 @@ export const PaymentSummaryCards: React.FC<PaymentSummaryCardsProps> = ({
     </div>
   );
 };
+

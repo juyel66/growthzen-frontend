@@ -100,8 +100,8 @@ function RegisterContent() {
         (status === 409
           ? 'An account with this email address already exists.'
           : status === 422
-          ? 'Validation error. Please check your form input.'
-          : 'Registration failed. Please try again.');
+            ? 'Validation error. Please check your form input.'
+            : 'Registration failed. Please try again.');
 
       Swal.fire({
         icon: 'error',
@@ -273,3 +273,4 @@ function RegisterContent() {
     </div>
   );
 }
+

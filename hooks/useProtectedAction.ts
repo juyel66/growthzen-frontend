@@ -131,90 +131,92 @@ export function useProtectedAction() {
       // Resolve current path + query as returnUrl
       const currentUrl =
         options.returnUrl ||
-        `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
-      const sanitizedReturnUrl = sanitizeRedirectUrl(currentUrl);
+          `${pathname}${searchParams.toString() ? ` ?${ searchParams.toString()
+    }` : ''}`;
+  const sanitizedReturnUrl = sanitizeRedirectUrl(currentUrl);
 
-      const payload: PendingActionPayload = {
-        action: options.action,
-        productId: options.productId,
-        quantity: options.quantity ?? 1,
-        selectedSize: options.selectedSize ?? null,
-        selectedColor: options.selectedColor ?? null,
-        attributes: options.attributes,
-        returnUrl: sanitizedReturnUrl,
-        timestamp: Date.now(),
-      };
+  const payload: PendingActionPayload = {
+    action: options.action,
+    productId: options.productId,
+    quantity: options.quantity ?? 1,
+    selectedSize: options.selectedSize ?? null,
+    selectedColor: options.selectedColor ?? null,
+    attributes: options.attributes,
+    returnUrl: sanitizedReturnUrl,
+    timestamp: Date.now(),
+  };
 
-      try {
-        sessionStorage.setItem(PENDING_ACTION_KEY, JSON.stringify(payload));
-      } catch {
-        // Fallback if sessionStorage is disabled
-      }
+  try {
+    sessionStorage.setItem(PENDING_ACTION_KEY, JSON.stringify(payload));
+  } catch {
+    // Fallback if sessionStorage is disabled
+  }
 
-      Swal.fire({
-        icon: 'info',
-        title: 'Sign In Required',
-        text: 'Please sign in to continue your purchase.',
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      });
+  Swal.fire({
+    icon: 'info',
+    title: 'Sign In Required',
+    text: 'Please sign in to continue your purchase.',
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+  });
 
-      const loginRedirect = `/auth/login?redirect=${encodeURIComponent(
+  const loginRedirect = `/auth/login?redirect=${encodeURIComponent(
         sanitizedReturnUrl
       )}&action=${options.action}`;
-      router.push(loginRedirect);
-    },
-    [isAuthenticated, pathname, searchParams, router]
+  router.push(loginRedirect);
+},
+[isAuthenticated, pathname, searchParams, router]
   );
 
-  /**
-   * Effect hook to restore and execute pending actions upon returning post-login.
-   */
-  const usePendingActionEffect = (
-    currentProductId: string,
-    onRestoreAction: (payload: PendingActionPayload) => void | Promise<void>
-  ) => {
-    useEffect(() => {
-      if (!isAuthenticated) return;
+/**
+ * Effect hook to restore and execute pending actions upon returning post-login.
+ */
+const usePendingActionEffect = (
+  currentProductId: string,
+  onRestoreAction: (payload: PendingActionPayload) => void | Promise<void>
+) => {
+  useEffect(() => {
+    if (!isAuthenticated) return;
 
-      try {
-        const raw = sessionStorage.getItem(PENDING_ACTION_KEY);
-        if (!raw) return;
+    try {
+      const raw = sessionStorage.getItem(PENDING_ACTION_KEY);
+      if (!raw) return;
 
-        const payload: PendingActionPayload = JSON.parse(raw);
+      const payload: PendingActionPayload = JSON.parse(raw);
 
-        // Check payload validity (within 30 minutes and matching current product)
-        const isFresh = Date.now() - payload.timestamp < 30 * 60 * 1000;
-        if (isFresh && payload.productId === currentProductId) {
-          // Clear payload first to prevent execution loops
-          sessionStorage.removeItem(PENDING_ACTION_KEY);
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Welcome Back!',
-            text: 'Continuing your purchase automatically...',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 2500,
-          });
-
-          onRestoreAction(payload);
-        }
-      } catch {
+      // Check payload validity (within 30 minutes and matching current product)
+      const isFresh = Date.now() - payload.timestamp < 30 * 60 * 1000;
+      if (isFresh && payload.productId === currentProductId) {
+        // Clear payload first to prevent execution loops
         sessionStorage.removeItem(PENDING_ACTION_KEY);
-      }
-    }, [isAuthenticated, currentProductId, onRestoreAction]);
-  };
 
-  return {
-    isAuthenticated,
-    executeProtectedAction,
-    usePendingActionEffect,
-  };
+        Swal.fire({
+          icon: 'success',
+          title: 'Welcome Back!',
+          text: 'Continuing your purchase automatically...',
+          toast: true,
+          position: 'top-end',
+          showConfirmButton: false,
+          timer: 2500,
+        });
+
+        onRestoreAction(payload);
+      }
+    } catch {
+      sessionStorage.removeItem(PENDING_ACTION_KEY);
+    }
+  }, [isAuthenticated, currentProductId, onRestoreAction]);
+};
+
+return {
+  isAuthenticated,
+  executeProtectedAction,
+  usePendingActionEffect,
+};
 }
 
 export default useProtectedAction;
+

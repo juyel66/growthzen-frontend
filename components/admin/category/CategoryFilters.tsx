@@ -64,3 +64,4 @@ export const CategoryFilters: React.FC<CategoryFiltersProps> = ({
 };
 
 export default CategoryFilters;
+

@@ -34,3 +34,4 @@ export const EmptyProduct: React.FC<EmptyProductProps> = ({
 };
 
 export default EmptyProduct;
+

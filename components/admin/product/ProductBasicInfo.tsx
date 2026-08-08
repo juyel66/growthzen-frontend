@@ -3,14 +3,25 @@
 import React from 'react';
 import { UseFormRegister, FieldErrors } from 'react-hook-form';
 import { ProductFormValues } from '@/lib/validations/product';
-import { FileText, Barcode, AlignLeft } from 'lucide-react';
+import { FileText, Barcode, AlignLeft, RefreshCw } from 'lucide-react';
 
 interface ProductBasicInfoProps {
   register: UseFormRegister<ProductFormValues>;
   errors: FieldErrors<ProductFormValues>;
+  onRefreshSku?: () => void;
+  onRefreshBarcode?: () => void;
+  isGeneratingSku?: boolean;
+  isGeneratingBarcode?: boolean;
 }
 
-export const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({ register, errors }) => {
+export const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({
+  register,
+  errors,
+  onRefreshSku,
+  onRefreshBarcode,
+  isGeneratingSku = false,
+  isGeneratingBarcode = false,
+}) => {
   return (
     <div className="flex flex-col gap-5 p-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
       <div className="flex items-center gap-2 text-base font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -41,9 +52,23 @@ export const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({ register, er
 
         {/* Product Code / SKU */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Product Code (SKU) *
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Product Code (SKU) *
+            </label>
+            {onRefreshSku && (
+              <button
+                type="button"
+                onClick={onRefreshSku}
+                disabled={isGeneratingSku}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 cursor-pointer disabled:opacity-50"
+                title="Generate new SKU from backend"
+              >
+                <RefreshCw className={`w-3 h-3 ${isGeneratingSku ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+            )}
+          </div>
           <div className="relative">
             <Barcode className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -64,9 +89,23 @@ export const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({ register, er
 
         {/* Barcode */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-            Barcode / EAN (Optional)
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Barcode / EAN (Optional)
+            </label>
+            {onRefreshBarcode && (
+              <button
+                type="button"
+                onClick={onRefreshBarcode}
+                disabled={isGeneratingBarcode}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 cursor-pointer disabled:opacity-50"
+                title="Generate new Barcode from backend"
+              >
+                <RefreshCw className={`w-3 h-3 ${isGeneratingBarcode ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+            )}
+          </div>
           <input
             type="text"
             {...register('barcode')}
@@ -120,3 +159,4 @@ export const ProductBasicInfo: React.FC<ProductBasicInfoProps> = ({ register, er
 };
 
 export default ProductBasicInfo;
+

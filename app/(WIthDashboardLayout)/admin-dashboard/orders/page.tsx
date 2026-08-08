@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { OrderView, OrderStatus } from "@/types/order";
+import { OrderView, OrderStatus, DateRangeFilterOption } from "@/types/order";
 import {
   useGetOrdersQuery,
+  useGetOrderSummaryQuery,
   useUpdateOrderStatusMutation,
   useCancelOrderMutation,
 } from "@/services/orderApi";
@@ -11,10 +12,11 @@ import {
 import { OrderSummaryCards } from "@/components/admin/order/OrderSummaryCards";
 import { OrderFilters } from "@/components/admin/order/OrderFilters";
 import { OrderTable } from "@/components/admin/order/OrderTable";
+import { OrderAccountingSummaryRow } from "@/components/admin/order/OrderAccountingSummaryRow";
 import { OrderStatusModal } from "@/components/admin/order/OrderStatusModal";
 import { TrackOrderModal } from "@/components/admin/order/TrackOrderModal";
 
-import { ListOrdered, RefreshCw, AlertTriangle, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ListOrdered, RefreshCw, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import Swal from "sweetalert2";
 
 export default function OrderListPage() {
@@ -22,6 +24,9 @@ export default function OrderListPage() {
   const [limit, setLimit] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [dateRangeFilter, setDateRangeFilter] = useState<DateRangeFilterOption | string>("ALL");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("ALL");
   const [shippingAreaFilter, setShippingAreaFilter] = useState<string>("ALL");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
@@ -30,16 +35,35 @@ export default function OrderListPage() {
   const [selectedOrderForStatus, setSelectedOrderForStatus] = useState<OrderView | null>(null);
   const [selectedOrderForTrack, setSelectedOrderForTrack] = useState<OrderView | null>(null);
 
-  // RTK Query hooks
-  const { data: responseData, isLoading, isFetching, isError, refetch } = useGetOrdersQuery(
-    {
+  // Unified query parameters shared between Orders List and Order Summary APIs
+  const queryParams = useMemo(
+    () => ({
       page,
       limit,
       search: search.trim() ? search.trim() : undefined,
       status: statusFilter !== "ALL" ? statusFilter : undefined,
-    },
-    { pollingInterval: 60000 }
+      dateRange: dateRangeFilter !== "ALL" ? dateRangeFilter : undefined,
+      startDate: dateRangeFilter === "custom" && startDate ? startDate : undefined,
+      endDate: dateRangeFilter === "custom" && endDate ? endDate : undefined,
+    }),
+    [page, limit, search, statusFilter, dateRangeFilter, startDate, endDate]
   );
+
+  // RTK Query hooks
+  const {
+    data: responseData,
+    isLoading: isOrdersLoading,
+    isFetching: isOrdersFetching,
+    isError: isOrdersError,
+    refetch: refetchOrders,
+  } = useGetOrdersQuery(queryParams, { pollingInterval: 60000 });
+
+  const {
+    data: summaryData,
+    isLoading: isSummaryLoading,
+    isError: isSummaryError,
+    refetch: refetchSummary,
+  } = useGetOrderSummaryQuery(queryParams);
 
   const [updateStatus, { isLoading: isUpdatingStatus }] = useUpdateOrderStatusMutation();
   const [cancelOrderMutation] = useCancelOrderMutation();
@@ -62,7 +86,9 @@ export default function OrderListPage() {
     let list = [...ordersList];
 
     if (paymentMethodFilter !== "ALL") {
-      list = list.filter((o) => (o.paymentMethod || o.payment?.method || "").toUpperCase() === paymentMethodFilter);
+      list = list.filter(
+        (o) => (o.paymentMethod || o.payment?.method || "").toUpperCase() === paymentMethodFilter
+      );
     }
 
     if (shippingAreaFilter !== "ALL") {
@@ -78,6 +104,11 @@ export default function OrderListPage() {
     return list;
   }, [ordersList, paymentMethodFilter, shippingAreaFilter, sortOrder]);
 
+  const handleRefresh = () => {
+    refetchOrders();
+    refetchSummary();
+  };
+
   const handleUpdateStatusSubmit = async (id: string, newStatus: OrderStatus, adminNote?: string) => {
     try {
       await updateStatus({ id, status: newStatus, adminNote }).unwrap();
@@ -90,7 +121,7 @@ export default function OrderListPage() {
         showConfirmButton: false,
         timer: 2500,
       });
-      refetch();
+      handleRefresh();
     } catch (err: any) {
       Swal.fire({
         icon: "error",
@@ -122,7 +153,7 @@ export default function OrderListPage() {
           showConfirmButton: false,
           timer: 2500,
         });
-        refetch();
+        handleRefresh();
       } catch (err: any) {
         Swal.fire({
           icon: "error",
@@ -136,21 +167,14 @@ export default function OrderListPage() {
   const handleResetFilters = () => {
     setSearch("");
     setStatusFilter("ALL");
+    setDateRangeFilter("ALL");
+    setStartDate("");
+    setEndDate("");
     setPaymentMethodFilter("ALL");
     setShippingAreaFilter("ALL");
     setSortOrder("desc");
     setPage(1);
   };
-
-  if (isLoading) {
-    return (
-      <div className="p-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen space-y-6 animate-pulse">
-        <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-        <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-        <div className="h-96 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen space-y-6">
@@ -169,23 +193,23 @@ export default function OrderListPage() {
         </div>
 
         <button
-          onClick={() => refetch()}
-          disabled={isFetching}
+          onClick={handleRefresh}
+          disabled={isOrdersFetching}
           className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-2xs cursor-pointer"
         >
-          <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-4 h-4 ${isOrdersFetching ? "animate-spin" : ""}`} />
           <span>Refresh List</span>
         </button>
       </div>
 
       {/* Error state alert */}
-      {isError && (
+      {isOrdersError && (
         <div className="p-4 rounded-2xl bg-rose-50 text-rose-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-rose-600" />
             <span>Failed to load order management list from backend APIs.</span>
           </div>
-          <button onClick={() => refetch()} className="px-3 py-1 bg-rose-600 text-white rounded-lg text-xs">
+          <button onClick={handleRefresh} className="px-3 py-1 bg-rose-600 text-white rounded-lg text-xs">
             Retry
           </button>
         </div>
@@ -204,9 +228,30 @@ export default function OrderListPage() {
       {/* Filters Bar */}
       <OrderFilters
         search={search}
-        setSearch={(val) => { setSearch(val); setPage(1); }}
+        setSearch={(val) => {
+          setSearch(val);
+          setPage(1);
+        }}
         statusFilter={statusFilter}
-        setStatusFilter={(val) => { setStatusFilter(val); setPage(1); }}
+        setStatusFilter={(val) => {
+          setStatusFilter(val);
+          setPage(1);
+        }}
+        dateRangeFilter={dateRangeFilter}
+        setDateRangeFilter={(val) => {
+          setDateRangeFilter(val);
+          setPage(1);
+        }}
+        startDate={startDate}
+        setStartDate={(val) => {
+          setStartDate(val);
+          setPage(1);
+        }}
+        endDate={endDate}
+        setEndDate={(val) => {
+          setEndDate(val);
+          setPage(1);
+        }}
         paymentMethodFilter={paymentMethodFilter}
         setPaymentMethodFilter={setPaymentMethodFilter}
         shippingAreaFilter={shippingAreaFilter}
@@ -214,13 +259,24 @@ export default function OrderListPage() {
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
         limit={limit}
-        setLimit={(l) => { setLimit(l); setPage(1); }}
+        setLimit={(l) => {
+          setLimit(l);
+          setPage(1);
+        }}
         onReset={handleResetFilters}
+      />
+
+      {/* Backend Order Accounting Summary Row (Above Orders Table) */}
+      <OrderAccountingSummaryRow
+        summaryData={summaryData}
+        isLoading={isSummaryLoading}
+        isError={isSummaryError}
       />
 
       {/* Order Table */}
       <OrderTable
         orders={filteredOrders}
+        isLoading={isOrdersLoading}
         onOpenStatusModal={(order) => setSelectedOrderForStatus(order)}
         onOpenTrackModal={(order) => setSelectedOrderForTrack(order)}
         onCancelOrder={handleCancelOrderSubmit}
@@ -236,7 +292,7 @@ export default function OrderListPage() {
 
         <div className="flex items-center gap-2">
           <button
-            disabled={page <= 1 || isFetching}
+            disabled={page <= 1 || isOrdersFetching}
             onClick={() => setPage((p) => Math.max(p - 1, 1))}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 disabled:opacity-40 cursor-pointer font-semibold"
           >
@@ -245,7 +301,7 @@ export default function OrderListPage() {
           </button>
 
           <button
-            disabled={page >= (meta.totalPages || 1) || isFetching}
+            disabled={page >= (meta.totalPages || 1) || isOrdersFetching}
             onClick={() => setPage((p) => p + 1)}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 disabled:opacity-40 cursor-pointer font-semibold"
           >

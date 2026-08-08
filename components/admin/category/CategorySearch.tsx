@@ -33,3 +33,4 @@ export const CategorySearch: React.FC<CategorySearchProps> = ({ searchTerm, onSe
 };
 
 export default CategorySearch;
+

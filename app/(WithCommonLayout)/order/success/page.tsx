@@ -31,15 +31,15 @@ export default function OrderSuccessPage({ searchParams }: PageProps) {
   const displayOrderId = order?.orderCode || rawOrderId || 'ORD-CONFIRMED';
   const estimatedDelivery = order?.confirmedAt
     ? new Date(new Date(order.confirmedAt).getTime() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString(
-        'en-US',
-        { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }
-      )
+      'en-US',
+      { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' }
+    )
     : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
+      weekday: 'long',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
 
   const subtotal = order?.subtotal ?? 0;
   const discountAmount = order?.discountAmount ?? 0;
@@ -116,7 +116,7 @@ export default function OrderSuccessPage({ searchParams }: PageProps) {
 
                 <div className="flex justify-between items-center text-slate-600 dark:text-slate-400 font-medium">
                   <span>Original Price / Subtotal:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">${subtotal.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">৳{subtotal.toFixed(2)}</span>
                 </div>
 
                 {couponCode && (
@@ -133,19 +133,19 @@ export default function OrderSuccessPage({ searchParams }: PageProps) {
                 {discountAmount > 0 && (
                   <div className="flex justify-between items-center text-emerald-600 dark:text-emerald-400 font-bold">
                     <span>Discount Saved:</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>-৳{discountAmount.toFixed(2)}</span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center text-slate-600 dark:text-slate-400 font-medium">
                   <span>Delivery Charge:</span>
-                  <span className="font-bold text-slate-900 dark:text-white">${deliveryCharge.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">৳{deliveryCharge.toFixed(2)}</span>
                 </div>
 
                 <div className="pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 flex justify-between items-center text-sm font-black text-slate-900 dark:text-white">
                   <span>Final Price Paid:</span>
                   <span className="text-emerald-600 dark:text-emerald-400 text-lg">
-                    ${payableAmount.toFixed(2)}
+                    ৳{payableAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -176,3 +176,4 @@ export default function OrderSuccessPage({ searchParams }: PageProps) {
     </div>
   );
 }
+

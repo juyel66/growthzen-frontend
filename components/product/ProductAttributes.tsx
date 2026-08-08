@@ -53,3 +53,4 @@ export const ProductAttributes: React.FC<ProductAttributesProps> = ({ attributes
 };
 
 export default ProductAttributes;
+

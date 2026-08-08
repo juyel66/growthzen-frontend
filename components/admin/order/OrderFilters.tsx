@@ -1,13 +1,20 @@
 "use client";
 
 import React from "react";
-import { Search, Filter, ArrowUpDown, RefreshCw } from "lucide-react";
+import { Search, Filter, ArrowUpDown, RefreshCw, Calendar } from "lucide-react";
+import { DateRangeFilterOption } from "@/types/order";
 
 interface OrderFiltersProps {
   search: string;
   setSearch: (val: string) => void;
   statusFilter: string;
   setStatusFilter: (val: string) => void;
+  dateRangeFilter: DateRangeFilterOption | string;
+  setDateRangeFilter: (val: DateRangeFilterOption | string) => void;
+  startDate: string;
+  setStartDate: (val: string) => void;
+  endDate: string;
+  setEndDate: (val: string) => void;
   paymentMethodFilter: string;
   setPaymentMethodFilter: (val: string) => void;
   shippingAreaFilter: string;
@@ -24,6 +31,12 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
   setSearch,
   statusFilter,
   setStatusFilter,
+  dateRangeFilter,
+  setDateRangeFilter,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   paymentMethodFilter,
   setPaymentMethodFilter,
   shippingAreaFilter,
@@ -38,7 +51,7 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
     <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xs space-y-3">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-3">
         {/* Search Bar */}
-        <div className="relative w-full lg:w-96">
+        <div className="relative w-full lg:w-80">
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
           <input
             type="text"
@@ -51,6 +64,26 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
 
         {/* Dropdown Filters */}
         <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          {/* Date Range Filter */}
+          <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <select
+              value={dateRangeFilter}
+              onChange={(e) => setDateRangeFilter(e.target.value as DateRangeFilterOption)}
+              className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="last_7_days">Last 7 Days</option>
+              <option value="last_30_days">Last 30 Days</option>
+              <option value="this_month">This Month</option>
+              <option value="last_month">Last Month</option>
+              <option value="this_year">This Year</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
+
           {/* Status Dropdown */}
           <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
@@ -135,6 +168,26 @@ export const OrderFilters: React.FC<OrderFiltersProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Custom Date Range Picker inputs when dateRangeFilter === 'custom' */}
+      {dateRangeFilter === "custom" && (
+        <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+          <span className="font-bold text-slate-600 dark:text-slate-400">Custom Date Range:</span>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none"
+          />
+          <span className="text-slate-400 font-semibold">to</span>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-200 focus:outline-none"
+          />
+        </div>
+      )}
     </div>
   );
 };

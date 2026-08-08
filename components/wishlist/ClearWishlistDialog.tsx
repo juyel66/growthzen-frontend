@@ -72,3 +72,4 @@ export const ClearWishlistDialog: React.FC<ClearWishlistDialogProps> = ({ itemCo
 };
 
 export default ClearWishlistDialog;
+

@@ -186,3 +186,4 @@ export const BannerTable: React.FC<BannerTableProps> = ({
     </div>
   );
 };
+

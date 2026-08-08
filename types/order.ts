@@ -87,6 +87,18 @@ export interface OrderView {
   cancelledAt?: string | null;
   deliveredAt?: string | null;
   adminNote?: string | null;
+  courierServiceCost?: number | null;
+  courierCost?: number | null;
+  deliveryProfit?: number | null;
+  courierProfit?: number | null;
+  productCost?: number | null;
+  grossSales?: number | null;
+  netProfit?: number | null;
+  customerPaid?: number | null;
+  productSelling?: number | null;
+  couponDiscount?: number | null;
+  categoryDiscount?: number | null;
+  courierChargeCollected?: number | null;
 }
 
 export interface OrderListMeta {
@@ -101,11 +113,39 @@ export interface OrderListResponse {
   meta: OrderListMeta;
 }
 
+export type DateRangeFilterOption =
+  | 'ALL'
+  | 'today'
+  | 'yesterday'
+  | 'last_7_days'
+  | 'last_30_days'
+  | 'this_month'
+  | 'last_month'
+  | 'this_year'
+  | 'custom';
+
 export interface OrderQueryParams {
   page?: number;
   limit?: number;
   search?: string;
   status?: OrderStatus | string;
+  dateRange?: DateRangeFilterOption | string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface OrderSummaryData {
+  totalSales?: number | null;
+  grossSales?: number | null;
+  totalRevenue?: number | null;
+  totalProductCost?: number | null;
+  productCost?: number | null;
+  totalCourierCost?: number | null;
+  courierCost?: number | null;
+  courierServiceCost?: number | null;
+  totalNetProfit?: number | null;
+  netProfit?: number | null;
+  totalOrders?: number | null;
 }
 
 /**

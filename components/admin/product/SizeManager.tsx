@@ -156,3 +156,4 @@ export const SizeManager: React.FC<SizeManagerProps> = ({
 };
 
 export default SizeManager;
+

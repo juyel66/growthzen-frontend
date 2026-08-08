@@ -41,3 +41,4 @@ export const CartEmptyState: React.FC = () => {
 };
 
 export default CartEmptyState;
+

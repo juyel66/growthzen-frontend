@@ -1,0 +1,13 @@
+export const ORDER_STATUS = {
+  PENDING: "PENDING",
+  CONFIRMED: "CONFIRMED",
+  PROCESSING: "PROCESSING",
+  PACKED: "PACKED",
+  SHIPPED: "SHIPPED",
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+  RETURNED: "RETURNED",
+} as const;
+
+export type OrderStatusType = keyof typeof ORDER_STATUS;
+

@@ -25,8 +25,8 @@ export const CategoryDetailsDrawer: React.FC<CategoryDetailsDrawerProps> = ({
     typeof category.parent === 'object' && category.parent?.name
       ? category.parent.name
       : typeof category.parentCategory === 'object' && category.parentCategory?.name
-      ? category.parentCategory.name
-      : 'Root Category (None)';
+        ? category.parentCategory.name
+        : 'Root Category (None)';
 
   return (
     <AnimatePresence>
@@ -213,3 +213,4 @@ export const CategoryDetailsDrawer: React.FC<CategoryDetailsDrawerProps> = ({
 };
 
 export default CategoryDetailsDrawer;
+

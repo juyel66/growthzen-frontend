@@ -8,7 +8,7 @@ import {
   getProductTitle,
   getProductCategoryName,
   getProductMainImage,
-  getProductFinalPrice,
+  getProductDisplayPrice,
 } from '@/types/product';
 import CartQuantitySelector from './CartQuantitySelector';
 import { Trash2, Heart, Loader2 } from 'lucide-react';
@@ -29,7 +29,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const productSlug = product?.slug || product?.id;
   const productUrl = `/products/${productSlug}`;
 
-  const unitPrice = item.unitPrice ?? (product ? getProductFinalPrice(product) : 0);
+  const unitPrice = item.unitPrice ?? item.price ?? (product ? getProductDisplayPrice(product) : 0);
   const unitDiscount = item.unitDiscount ?? 0;
   const lineTotal = item.lineTotal ?? item.lineSubtotal ?? unitPrice * item.quantity;
 
@@ -121,10 +121,10 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
             </h3>
           </Link>
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span>Unit: ${unitPrice.toFixed(2)}</span>
+            <span>Unit: ৳{unitPrice.toFixed(2)}</span>
             {unitDiscount > 0 && (
               <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                (Saved ${unitDiscount.toFixed(2)})
+                (Saved ৳{unitDiscount.toFixed(2)})
               </span>
             )}
           </div>
@@ -144,7 +144,7 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
         <div className="flex flex-col items-end min-w-24 text-right">
           <span className="text-xs text-slate-400 font-medium">Subtotal</span>
           <span className="text-base font-extrabold text-slate-900 dark:text-white">
-            ${lineTotal.toFixed(2)}
+            ৳{lineTotal.toFixed(2)}
           </span>
         </div>
 
@@ -186,3 +186,4 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
 };
 
 export default CartItem;
+

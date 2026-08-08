@@ -32,3 +32,4 @@ export const ProductGrid: React.FC<ProductGridProps> = ({
 };
 
 export default ProductGrid;
+

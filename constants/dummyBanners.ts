@@ -52,3 +52,4 @@ export const dummyBanners: Banner[] = [
   },
 ];
 export default dummyBanners;
+

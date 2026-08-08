@@ -68,3 +68,4 @@ export const ProductDetailsSkeleton: React.FC = () => {
     </div>
   );
 };
+

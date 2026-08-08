@@ -72,3 +72,4 @@ export const ClearCartDialog: React.FC<ClearCartDialogProps> = ({ itemCount }) =
 };
 
 export default ClearCartDialog;
+

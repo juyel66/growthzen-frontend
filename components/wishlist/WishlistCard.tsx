@@ -35,10 +35,10 @@ export const WishlistCard: React.FC<WishlistCardProps> = ({
   const isOutOfStock = typeof product.quantity === 'number' && product.quantity <= 0;
   const addedDate = item.createdAt
     ? new Date(item.createdAt).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
     : null;
 
   const [removeItem, { isLoading: isRemoving }] = useRemoveWishlistItemMutation();
@@ -221,3 +221,4 @@ export const WishlistCard: React.FC<WishlistCardProps> = ({
 };
 
 export default WishlistCard;
+

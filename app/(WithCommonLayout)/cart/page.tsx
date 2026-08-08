@@ -12,6 +12,7 @@ import ClearCartDialog from '@/components/cart/ClearCartDialog';
 import { useAppSelector } from '@/redux/hooks';
 import { selectIsAuthenticated } from '@/features/auth/authSlice';
 import { ShoppingBag, Home, ChevronRight, Lock } from 'lucide-react';
+import { getProductDisplayPrice } from '@/types/product';
 
 export default function CartPage() {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
@@ -31,7 +32,7 @@ export default function CartPage() {
     summary?.subtotal ??
     cart?.totalAmount ??
     items.reduce((acc, item) => {
-      const price = item.unitPrice ?? item.price ?? item.product?.customerSellPrice ?? item.product?.price ?? 0;
+      const price = item.unitPrice ?? item.price ?? (item.product ? getProductDisplayPrice(item.product) : 0);
       return acc + price * item.quantity;
     }, 0);
 
@@ -148,3 +149,4 @@ export default function CartPage() {
     </div>
   );
 }
+

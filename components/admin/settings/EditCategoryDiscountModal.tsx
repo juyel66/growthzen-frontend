@@ -183,3 +183,4 @@ export const EditCategoryDiscountModal: React.FC<EditCategoryDiscountModalProps>
     </div>
   );
 };
+

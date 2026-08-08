@@ -105,3 +105,4 @@ export const LowStockProducts: React.FC<LowStockProductsProps> = ({
     </div>
   );
 };
+

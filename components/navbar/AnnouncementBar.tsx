@@ -42,3 +42,4 @@ export const AnnouncementBar = () => {
   );
 };
 export default AnnouncementBar;
+

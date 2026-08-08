@@ -34,11 +34,11 @@ interface KpiCardsSectionProps {
   shipping?: DashboardShippingSummary;
 }
 
-const formatCurrency = (val: number | undefined) => {
-  if (val === undefined || val === null) return "$0.00";
+const formatCurrency = (val?: number | null) => {
+  if (val === undefined || val === null) return "৳0.00";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 2,
   }).format(val);
 };
@@ -59,18 +59,63 @@ export const KpiCardsSection: React.FC<KpiCardsSectionProps> = ({
 }) => {
   const cards = [
     {
-      title: "Total Revenue",
-      value: formatCurrency(revenue?.totalRevenue),
-      subtitle: `Selected Range: ${formatCurrency(revenue?.selectedRevenue)}`,
+      title: "Gross Sales",
+      value: formatCurrency(revenue?.grossSales),
+      subtitle: `Total Product Sales`,
       icon: DollarSign,
       color: "from-blue-600 to-indigo-600",
       accentBg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-      link: "/admin-dashboard/orders",
+      link: "/admin-dashboard/analytics/revenue",
       breakdown: [
-        { label: "Today", val: formatCurrency(revenue?.todayRevenue) },
-        { label: "Weekly", val: formatCurrency(revenue?.weeklyRevenue) },
-        { label: "Monthly", val: formatCurrency(revenue?.monthlyRevenue) },
-        { label: "Yearly", val: formatCurrency(revenue?.yearlyRevenue) },
+        { label: "Today", val: formatCurrency(revenue?.todaySales ?? revenue?.todayRevenue) },
+      ],
+    },
+    {
+      title: "Net Profit",
+      value: formatCurrency(revenue?.netProfit),
+      subtitle: `Net Company Profit`,
+      icon: Sparkles,
+      color: "from-emerald-600 to-teal-600",
+      accentBg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      link: "/admin-dashboard/analytics/revenue",
+      breakdown: [
+        { label: "Today", val: formatCurrency(revenue?.todayProfit) },
+      ],
+    },
+    {
+      title: "Product Cost",
+      value: formatCurrency(revenue?.productCost ?? revenue?.totalCost),
+      subtitle: `Total Cost of Goods`,
+      icon: Package,
+      color: "from-rose-600 to-pink-600",
+      accentBg: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+      link: "/admin-dashboard/analytics/revenue",
+      breakdown: [
+        { label: "Today", val: formatCurrency(revenue?.todayCost) },
+      ],
+    },
+    {
+      title: "Courier Cost",
+      value: formatCurrency(revenue?.courierServiceCost ?? revenue?.totalCourierCost),
+      subtitle: `Courier Expense`,
+      icon: Truck,
+      color: "from-amber-600 to-orange-600",
+      accentBg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      link: "/admin-dashboard/analytics/revenue",
+      breakdown: [
+        { label: "Today", val: formatCurrency(revenue?.todayCourierCost) },
+      ],
+    },
+    {
+      title: "Courier Profit",
+      value: formatCurrency(revenue?.courierProfit),
+      subtitle: `Delivery Margin`,
+      icon: Truck,
+      color: "from-indigo-600 to-sky-600",
+      accentBg: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+      link: "/admin-dashboard/analytics/revenue",
+      breakdown: [
+        { label: "Today", val: formatCurrency(revenue?.todayCourierProfit) },
       ],
     },
     {
@@ -223,3 +268,4 @@ export const KpiCardsSection: React.FC<KpiCardsSectionProps> = ({
     </div>
   );
 };
+

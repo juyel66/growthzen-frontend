@@ -44,8 +44,8 @@ export const CouponCard: React.FC<CouponCardProps> = ({
     coupon.scope === 'SPECIFIC_CATEGORY' || coupon.scope === 'category'
       ? `Category: ${coupon.categoryName || coupon.categories?.join(', ') || 'Specific'}`
       : coupon.scope === 'SPECIFIC_PRODUCT'
-      ? 'Specific Products'
-      : 'Global Store Discount';
+        ? 'Specific Products'
+        : 'Global Store Discount';
 
   const expiry = coupon.expiresAt || coupon.expiryDate;
 
@@ -104,3 +104,4 @@ export const CouponCard: React.FC<CouponCardProps> = ({
 };
 
 export default CouponCard;
+

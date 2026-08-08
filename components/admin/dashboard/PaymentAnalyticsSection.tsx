@@ -175,3 +175,4 @@ export const PaymentAnalyticsSection: React.FC<PaymentAnalyticsSectionProps> = (
     </div>
   );
 };
+

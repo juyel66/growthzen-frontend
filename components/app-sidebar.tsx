@@ -69,8 +69,13 @@ const mainAdminItems = [
     icon: CreditCard,
   },
   {
-    title: "Customers",
-    url: "/admin-dashboard/customers",
+    title: "Invoices",
+    url: "/admin-dashboard/invoices",
+    icon: FileText,
+  },
+  {
+    title: "User Management",
+    url: "/admin-dashboard/users",
     icon: Users,
   },
   {
@@ -336,3 +341,4 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     </Sidebar>
   );
 }
+

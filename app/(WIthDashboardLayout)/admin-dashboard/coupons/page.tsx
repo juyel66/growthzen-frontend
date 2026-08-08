@@ -33,7 +33,7 @@ const formatCurrency = (val?: number | null) => {
   if (val === undefined || val === null) return "-";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val);
 };
 
@@ -285,7 +285,7 @@ export default function AdminCouponsPage() {
           >
             <option value="ALL">All Discount Types</option>
             <option value="PERCENTAGE">Percentage (%)</option>
-            <option value="FIXED">Fixed Amount ($)</option>
+            <option value="FIXED">Fixed Amount (৳)</option>
           </select>
         </div>
 
@@ -416,7 +416,7 @@ export default function AdminCouponsPage() {
                           ) : (
                             <>
                               <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>${coupon.discountValue.toFixed(2)} OFF</span>
+                              <span>৳{coupon.discountValue.toFixed(2)} OFF</span>
                             </>
                           )}
                         </div>
@@ -567,3 +567,4 @@ export default function AdminCouponsPage() {
     </div>
   );
 }
+

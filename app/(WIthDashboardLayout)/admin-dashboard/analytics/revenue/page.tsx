@@ -41,7 +41,7 @@ const RANGE_OPTIONS: { label: string; value: DashboardRangeKey }[] = [
 const formatCurrency = (val: number | undefined) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
     maximumFractionDigits: 2,
   }).format(val || 0);
 };
@@ -171,7 +171,7 @@ export default function RevenueAnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
                 <XAxis dataKey="label" fontSize={11} stroke="#94a3b8" />
                 <YAxis fontSize={11} stroke="#94a3b8" />
-                <Tooltip formatter={(val) => [`$${Number(val).toLocaleString()}`, "Revenue"]} />
+                <Tooltip formatter={(val) => [`৳${Number(val).toLocaleString()}`, "Revenue"]} />
                 <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2.5} fill="url(#analyticsRevGrad)" />
               </AreaChart>
             </ResponsiveContainer>
@@ -188,9 +188,9 @@ export default function RevenueAnalyticsPage() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
                 <XAxis dataKey="label" fontSize={11} stroke="#94a3b8" />
                 <YAxis fontSize={11} stroke="#94a3b8" />
-                <Tooltip formatter={(val) => [`$${Number(val).toLocaleString()}`, "Revenue"]} />
+                <Tooltip formatter={(val) => [`৳${Number(val).toLocaleString()}`, "Revenue"]} />
                 <Legend wrapperStyle={{ fontSize: "11px" }} />
-                <Bar dataKey="revenue" name="Revenue ($)" fill="#10b981" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" name="Revenue (৳)" fill="#10b981" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -199,3 +199,4 @@ export default function RevenueAnalyticsPage() {
     </div>
   );
 }
+

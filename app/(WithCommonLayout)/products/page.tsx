@@ -7,7 +7,7 @@ import ProductGrid from '@/components/product/ProductGrid';
 import { ProductGridSkeleton } from '@/components/product/ProductSkeleton';
 import ProductError from '@/components/product/ProductError';
 import { Search, SlidersHorizontal, ArrowUpDown, Tag } from 'lucide-react';
-import { Product } from '@/types/product';
+import { Product, getProductDisplayPrice } from '@/types/product';
 
 export default function ProductsPage() {
   const { data: productsData, isLoading, isError, refetch } = useGetProductsQuery();
@@ -55,9 +55,9 @@ export default function ProductsPage() {
 
     // Sort order
     if (sortBy === 'price-low') {
-      list.sort((a, b) => (a.finalPrice ?? a.customerSellPrice ?? a.price ?? 0) - (b.finalPrice ?? b.customerSellPrice ?? b.price ?? 0));
+      list.sort((a, b) => getProductDisplayPrice(a) - getProductDisplayPrice(b));
     } else if (sortBy === 'price-high') {
-      list.sort((a, b) => (b.finalPrice ?? b.customerSellPrice ?? b.price ?? 0) - (a.finalPrice ?? a.customerSellPrice ?? a.price ?? 0));
+      list.sort((a, b) => getProductDisplayPrice(b) - getProductDisplayPrice(a));
     } else if (sortBy === 'rating') {
       list.sort((a, b) => (b.averageRating ?? b.ratingsAverage ?? 0) - (a.averageRating ?? a.ratingsAverage ?? 0));
     } else if (sortBy === 'featured') {
@@ -151,3 +151,4 @@ export default function ProductsPage() {
     </div>
   );
 }
+

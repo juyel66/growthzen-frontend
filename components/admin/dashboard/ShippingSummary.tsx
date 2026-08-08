@@ -62,3 +62,4 @@ export const ShippingSummary: React.FC<ShippingSummaryProps> = ({
     </div>
   );
 };
+

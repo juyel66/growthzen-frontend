@@ -44,3 +44,4 @@ export const WishlistSkeleton: React.FC = () => {
 };
 
 export default WishlistSkeleton;
+

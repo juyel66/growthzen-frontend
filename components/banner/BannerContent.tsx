@@ -101,3 +101,4 @@ export const BannerContent: React.FC<BannerContentProps> = ({
   );
 };
 export default BannerContent;
+

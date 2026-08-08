@@ -111,8 +111,8 @@ function LoginContent() {
         (status === 401
           ? 'Invalid email or password.'
           : status === 404
-          ? 'User account not found.'
-          : 'Failed to sign in. Please try again.');
+            ? 'User account not found.'
+            : 'Failed to sign in. Please try again.');
 
       Swal.fire({
         icon: 'error',
@@ -244,3 +244,4 @@ function LoginContent() {
     </div>
   );
 }
+

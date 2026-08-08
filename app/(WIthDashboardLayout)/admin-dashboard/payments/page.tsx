@@ -166,17 +166,6 @@ export default function AdminPaymentsPage() {
     setPage(1);
   };
 
-  if (isLoading) {
-    return (
-      <div className="p-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen space-y-6 animate-pulse">
-        <div className="h-28 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-        <div className="h-32 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-        <div className="h-16 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-        <div className="h-96 bg-slate-200 dark:bg-slate-800 rounded-2xl w-full" />
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 bg-slate-50/50 dark:bg-slate-950 min-h-screen space-y-6">
       {/* Page Header */}
@@ -219,15 +208,15 @@ export default function AdminPaymentsPage() {
         <div className="p-4 rounded-2xl bg-rose-50 text-rose-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-rose-600" />
-            <span>Failed to load payment transactions from backend APIs.</span>
+            <span>Failed to load payment transactions ledger.</span>
           </div>
-          <button onClick={() => refetch()} className="px-3 py-1 bg-rose-600 text-white rounded-lg text-xs">
+          <button onClick={() => refetch()} className="px-3 py-1 bg-rose-600 text-white rounded-lg text-xs font-bold">
             Retry
           </button>
         </div>
       )}
 
-      {/* Summary KPI Cards & Revenue Totals */}
+      {/* Summary KPI & Revenue Cards */}
       <PaymentSummaryCards
         counts={counts}
         totalRevenue={totalRevenue}
@@ -237,9 +226,10 @@ export default function AdminPaymentsPage() {
           setStatusFilter(st);
           setPage(1);
         }}
+        isLoading={isLoading}
       />
 
-      {/* Filter Bar */}
+      {/* Filters Bar */}
       <PaymentFilters
         search={search}
         setSearch={(val) => { setSearch(val); setPage(1); }}
@@ -254,13 +244,14 @@ export default function AdminPaymentsPage() {
         onReset={handleResetFilters}
       />
 
-      {/* Payments Table */}
+      {/* Payment Table */}
       <PaymentTable
         payments={sortedPayments}
-        onOpenDetailsModal={(item) => setSelectedPaymentForDetails(item)}
-        onOpenApproveModal={(item) => setSelectedPaymentForApprove(item)}
-        onOpenRejectModal={(item) => setSelectedPaymentForReject(item)}
-        onOpenRefundModal={(item) => setSelectedPaymentForRefund(item)}
+        isLoading={isLoading}
+        onOpenDetailsModal={(pay) => setSelectedPaymentForDetails(pay)}
+        onOpenApproveModal={(pay) => setSelectedPaymentForApprove(pay)}
+        onOpenRejectModal={(pay) => setSelectedPaymentForReject(pay)}
+        onOpenRefundModal={(pay) => setSelectedPaymentForRefund(pay)}
       />
 
       {/* Pagination Controls */}
@@ -330,3 +321,4 @@ export default function AdminPaymentsPage() {
     </div>
   );
 }
+

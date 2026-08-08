@@ -145,3 +145,4 @@ export const BannerCardList: React.FC<BannerCardListProps> = ({
     </div>
   );
 };
+

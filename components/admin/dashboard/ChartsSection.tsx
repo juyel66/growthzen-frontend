@@ -38,7 +38,7 @@ const CustomTooltip = ({ active, payload, label, isCurrency = false }: any) => {
             <span className="text-slate-300 font-medium">{entry.name}:</span>
             <span className="font-bold text-white">
               {isCurrency
-                ? `$${Number(entry.value).toLocaleString(undefined, {
+                ? `৳${Number(entry.value).toLocaleString(undefined, {
                     minimumFractionDigits: 2,
                   })}`
                 : entry.value?.toLocaleString()}
@@ -237,3 +237,4 @@ export const ChartsSection: React.FC<ChartsSectionProps> = ({ chartsData }) => {
     </div>
   );
 };
+

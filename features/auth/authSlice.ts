@@ -93,3 +93,8 @@ export const selectIsAuthenticated = (state: { auth: AuthState }): boolean => st
 export const selectIsAuthInitialized = (state: { auth: AuthState }): boolean => state.auth.isInitialized;
 export const selectIsRestoring = (state: { auth: AuthState }): boolean => state.auth.isRestoring;
 export const selectAuthToken = (state: { auth: AuthState }): string | null => state.auth.token;
+export const selectIsReseller = (state: { auth: AuthState }): boolean => {
+  const role = state.auth.role || state.auth.user?.role;
+  return typeof role === 'string' && role.toUpperCase() === 'RESELLER';
+};
+

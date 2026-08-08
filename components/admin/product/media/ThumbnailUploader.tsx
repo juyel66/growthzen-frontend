@@ -112,3 +112,4 @@ export const ThumbnailUploader: React.FC<ThumbnailUploaderProps> = ({
 };
 
 export default ThumbnailUploader;
+

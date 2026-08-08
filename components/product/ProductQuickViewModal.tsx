@@ -55,3 +55,4 @@ export const ProductQuickViewModal: React.FC<ProductQuickViewModalProps> = ({
 };
 
 export default ProductQuickViewModal;
+

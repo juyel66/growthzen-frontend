@@ -4,7 +4,7 @@ import React from 'react';
 import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
 import { CartItem } from '@/types/cart';
-import { getProductTitle, getProductMainImage } from '@/types/product';
+import { getProductTitle, getProductMainImage, getProductDisplayPrice } from '@/types/product';
 import { ShoppingBag, Truck, Tag, ShieldCheck } from 'lucide-react';
 
 interface OrderSummaryProps {
@@ -49,7 +49,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           const product = item.product;
           const title = getProductTitle(product);
           const image = getProductMainImage(product);
-          const unitPrice = item.unitPrice ?? item.price ?? product?.customerSellPrice ?? product?.price ?? 0;
+          const unitPrice = item.unitPrice ?? item.price ?? (product ? getProductDisplayPrice(product) : 0);
           const lineTotal = item.lineTotal ?? unitPrice * item.quantity;
           const productSlug = product?.slug || product?.id;
 
@@ -85,12 +85,12 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                   {title}
                 </span>
                 <span className="text-[11px] font-semibold text-slate-400">
-                  {item.quantity} x ${unitPrice.toFixed(2)}{item.size ? ` • Size: ${item.size}` : ''}
+                  {item.quantity} x ৳{unitPrice.toFixed(2)}{item.size ? ` • Size: ${item.size}` : ''}
                 </span>
               </div>
 
               <span className="font-extrabold text-xs text-slate-900 dark:text-white shrink-0">
-                ${lineTotal.toFixed(2)}
+                ৳{lineTotal.toFixed(2)}
               </span>
             </div>
           );
@@ -101,13 +101,13 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="flex flex-col gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-400">
         <div className="flex items-center justify-between">
           <span>Items Subtotal</span>
-          <span className="font-bold text-slate-900 dark:text-white">${subtotal.toFixed(2)}</span>
+          <span className="font-bold text-slate-900 dark:text-white">৳{subtotal.toFixed(2)}</span>
         </div>
 
         {categoryDiscount > 0 && (
           <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
             <span>Category Discount</span>
-            <span className="font-bold">-${categoryDiscount.toFixed(2)}</span>
+            <span className="font-bold">-৳{categoryDiscount.toFixed(2)}</span>
           </div>
         )}
 
@@ -116,7 +116,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span className="flex items-center gap-1">
               <Tag className="w-3.5 h-3.5" /> Coupon Savings
             </span>
-            <span className="font-bold">-${couponDiscount.toFixed(2)}</span>
+            <span className="font-bold">-৳{couponDiscount.toFixed(2)}</span>
           </div>
         )}
 
@@ -130,7 +130,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                 Free
               </span>
             ) : (
-              `$${shippingFee.toFixed(2)}`
+              `৳${shippingFee.toFixed(2)}`
             )}
           </span>
         </div>
@@ -138,7 +138,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
         <div className="flex items-center justify-between">
           <span>Estimated Tax</span>
           <span className="font-bold text-slate-900 dark:text-white">
-            {tax === 0 ? 'Included' : `$${tax.toFixed(2)}`}
+            {tax === 0 ? 'Included' : `৳${tax.toFixed(2)}`}
           </span>
         </div>
       </div>
@@ -149,12 +149,12 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           <span className="text-sm font-extrabold text-slate-900 dark:text-white">Grand Total</span>
           {totalDiscount > 0 && (
             <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-              Total Savings: ${totalDiscount.toFixed(2)}
+              Total Savings: ৳{totalDiscount.toFixed(2)}
             </span>
           )}
         </div>
         <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-          ${grandTotal.toFixed(2)}
+          ৳{grandTotal.toFixed(2)}
         </span>
       </div>
 
@@ -168,3 +168,4 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 };
 
 export default OrderSummary;
+

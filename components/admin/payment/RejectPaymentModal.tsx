@@ -90,3 +90,4 @@ export const RejectPaymentModal: React.FC<RejectPaymentModalProps> = ({
     </div>
   );
 };
+

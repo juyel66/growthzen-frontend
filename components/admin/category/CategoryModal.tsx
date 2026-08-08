@@ -69,7 +69,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         .trim()
         .replace(/[^\w\s-]/g, '')
         .replace(/[\s_-]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+        .replace(/^-+|-+৳/g, '');
       setValue('slug', generatedSlug, { shouldValidate: true });
     }
   }, [categoryName, isEditing, isSlugManuallyEdited, setValue]);
@@ -86,8 +86,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
           typeof initialCategory.parentCategoryId === 'string'
             ? initialCategory.parentCategoryId
             : typeof initialCategory.parent === 'object' && initialCategory.parent?.id
-            ? initialCategory.parent.id
-            : null,
+              ? initialCategory.parent.id
+              : null,
         discountPercentage: initialCategory.discountPercentage || 0,
         discountEnabled: Boolean(initialCategory.discountEnabled),
         sortOrder: initialCategory.sortOrder || 0,
@@ -165,8 +165,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         (status === 409
           ? 'A category with this name or slug already exists.'
           : status === 400
-          ? 'Validation error. Please check your form input.'
-          : 'Failed to save category. Please try again.');
+            ? 'Validation error. Please check your form input.'
+            : 'Failed to save category. Please try again.');
 
       Swal.fire({
         icon: 'error',
@@ -450,3 +450,4 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
 };
 
 export default CategoryModal;
+

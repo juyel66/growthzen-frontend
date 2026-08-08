@@ -8,3 +8,4 @@ export const BannerPagination = () => {
   );
 };
 export default BannerPagination;
+

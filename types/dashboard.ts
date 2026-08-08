@@ -16,6 +16,27 @@ export interface DashboardRangeWindow {
 
 export interface DashboardRevenueAnalytics {
   range?: DashboardRangeWindow;
+  grossSales?: number | null;
+  netProfit?: number | null;
+  customerSales?: number | null;
+  productSelling?: number | null;
+  productCost?: number;
+  totalCost?: number;
+  courierCost?: number;
+  totalCourierCost?: number;
+  courierServiceCost?: number;
+  courierProfit?: number;
+  todaySales?: number;
+  todayCustomerSales?: number | null;
+  todayProductSelling?: number | null;
+  todayProfit?: number;
+  todayNetProfit?: number | null;
+  todayCost?: number;
+  todayProductCost?: number;
+  todayCourierCost?: number;
+  todayCourierProfit?: number;
+  todayQuantitySold?: number;
+  todayQuantity?: number;
   totalRevenue: number;
   todayRevenue: number;
   yesterdayRevenue: number;
@@ -67,6 +88,9 @@ export interface DashboardProductSummary {
   activeProducts: number;
   inactiveProducts: number;
   featuredProducts: number;
+  totalUnitsSold?: number | null;
+  todayUnits?: number | null;
+  monthlyUnits?: number | null;
 }
 
 export interface DashboardCustomerGrowthChartPoint {
@@ -110,6 +134,31 @@ export interface DashboardCouponSummary {
   totalCoupons: number;
 }
 
+export interface DashboardAccountingSummary {
+  grossSales?: number | null;
+  netProfit?: number | null;
+  totalProductCost?: number | null;
+  courierCost?: number | null;
+  courierProfit?: number | null;
+  todaySales?: number | null;
+  todayProfit?: number | null;
+  todayCost?: number | null;
+  todayCourierCost?: number | null;
+  todayCourierProfit?: number | null;
+  todayQuantity?: number | null;
+}
+
+export interface CourierAreaAnalytics {
+  orders: number;
+  courierCost: number;
+  courierProfit: number;
+}
+
+export interface DashboardCourierAnalytics {
+  insideDhaka?: CourierAreaAnalytics | null;
+  outsideDhaka?: CourierAreaAnalytics | null;
+}
+
 export interface DashboardShippingSummary {
   totalShippingMethods: number;
   activeShippingMethods: number;
@@ -119,6 +168,8 @@ export interface DashboardShippingSummary {
 export interface DashboardOverview {
   generatedAt: string;
   revenue: DashboardRevenueAnalytics;
+  accounting?: DashboardAccountingSummary | null;
+  courierAnalytics?: DashboardCourierAnalytics | null;
   orders: DashboardOrderAnalytics;
   products: DashboardProductSummary;
   customers: DashboardCustomerAnalytics;
@@ -127,9 +178,24 @@ export interface DashboardOverview {
   shipping: DashboardShippingSummary;
 }
 
+export interface DashboardAccountingChartPoint {
+  label: string;
+  revenue?: number | null;
+  profit?: number | null;
+  courierCost?: number | null;
+  productCost?: number | null;
+}
+
 export interface DashboardRevenueChartPoint {
   label: string;
-  revenue: number;
+  grossSales?: number | null;
+  revenue?: number | null;
+  netProfit?: number | null;
+  profit?: number | null;
+  productCost?: number | null;
+  courierCost?: number | null;
+  quantitySold?: number | null;
+  quantity?: number | null;
 }
 
 export interface DashboardOrdersChartPoint {
@@ -158,6 +224,13 @@ export interface DashboardPaymentChartPoint {
 export interface DashboardCharts {
   range?: DashboardRangeWindow;
   revenueChart: DashboardRevenueChartPoint[];
+  grossSalesChart?: DashboardRevenueChartPoint[];
+  netProfitChart?: DashboardRevenueChartPoint[];
+  profitChart?: DashboardRevenueChartPoint[];
+  courierCostChart?: DashboardRevenueChartPoint[];
+  productCostChart?: DashboardRevenueChartPoint[];
+  quantitySoldChart?: DashboardRevenueChartPoint[];
+  quantityChart?: DashboardRevenueChartPoint[];
   ordersChart: DashboardOrdersChartPoint[];
   paymentChart: DashboardPaymentChartPoint[];
   customerGrowthChart: DashboardCustomerGrowthChartPoint[];
@@ -171,6 +244,8 @@ export interface DashboardRecentOrderItem {
   paymentStatus: string | null;
   orderStatus: string;
   createdAt: string;
+  courierCost?: number | null;
+  netProfit?: number | null;
 }
 
 export interface DashboardRecentCustomerItem {

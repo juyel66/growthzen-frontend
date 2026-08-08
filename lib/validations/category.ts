@@ -16,3 +16,4 @@ export const categoryFormSchema = z.object({
 });
 
 export type CategoryFormValues = z.infer<typeof categoryFormSchema>;
+

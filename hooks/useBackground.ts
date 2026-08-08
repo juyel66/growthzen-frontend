@@ -12,3 +12,4 @@ export const useBackground = () => {
   };
 };
 export default useBackground;
+

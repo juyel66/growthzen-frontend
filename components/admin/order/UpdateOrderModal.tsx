@@ -12,20 +12,23 @@ interface UpdateOrderModalProps {
     orderId: string,
     status: OrderStatus,
     paymentStatus: "Paid" | "Unpaid",
-    adminNote?: string
+    adminNote?: string,
+    courierServiceCost?: number
   ) => Promise<void>;
   isLoading: boolean;
 }
 
+import { ORDER_STATUS } from "@/constants/orderStatus";
+
 const ORDER_STATUS_OPTIONS: { label: string; value: OrderStatus }[] = [
-  { label: "Pending", value: "PENDING" },
-  { label: "Confirmed", value: "CONFIRMED" },
-  { label: "Processing", value: "PROCESSING" },
-  { label: "Packed", value: "PACKED" },
-  { label: "Shipped", value: "SHIPPED" },
-  { label: "Delivered", value: "DELIVERED" },
-  { label: "Cancelled", value: "CANCELLED" },
-  { label: "Returned", value: "RETURNED" },
+  { label: "Pending", value: ORDER_STATUS.PENDING },
+  { label: "Confirmed", value: ORDER_STATUS.CONFIRMED },
+  { label: "Processing", value: ORDER_STATUS.PROCESSING },
+  { label: "Packed", value: ORDER_STATUS.PACKED },
+  { label: "Shipped", value: ORDER_STATUS.SHIPPED },
+  { label: "Delivered", value: ORDER_STATUS.DELIVERED },
+  { label: "Cancelled", value: ORDER_STATUS.CANCELLED },
+  { label: "Returned", value: ORDER_STATUS.RETURNED },
 ];
 
 export const UpdateOrderModal: React.FC<UpdateOrderModalProps> = ({
@@ -38,35 +41,53 @@ export const UpdateOrderModal: React.FC<UpdateOrderModalProps> = ({
   const [selectedOrderStatus, setSelectedOrderStatus] = useState<OrderStatus>("PENDING");
   const [selectedPayment, setSelectedPayment] = useState<"Paid" | "Unpaid">("Paid");
   const [adminNote, setAdminNote] = useState<string>("");
+  const [courierServiceCost, setCourierServiceCost] = useState<number | "">("");
 
   useEffect(() => {
     if (order) {
       const currentOrderStatus = (order.status || "PENDING") as OrderStatus;
       const isPaid = order.payment?.status === "PAID";
-      
+
       setSelectedOrderStatus(currentOrderStatus);
       setSelectedPayment(isPaid ? "Paid" : "Unpaid");
       setAdminNote("");
+      setCourierServiceCost(order.courierServiceCost ?? "");
     }
   }, [order, isOpen]);
 
   if (!isOpen || !order) return null;
 
-  // Auto UI Logic: When Order Status becomes Delivered -> auto set Payment = Paid
+  // Auto UI Logic: When Order Status becomes Delivered -> auto set Payment = Paid. Clear courier cost if changed away from DELIVERED.
   const handleOrderStatusChange = (newStatus: OrderStatus) => {
     setSelectedOrderStatus(newStatus);
     if (newStatus === "DELIVERED") {
       setSelectedPayment("Paid");
+    } else {
+      setCourierServiceCost("");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedOrderStatus === "DELIVERED") {
+      if (courierServiceCost === "" || courierServiceCost === null || isNaN(Number(courierServiceCost))) {
+        alert("Courier Service Cost is required for Delivered orders.");
+        return;
+      }
+      if (Number(courierServiceCost) < 0) {
+        alert("Courier Service Cost must be at least 0.");
+        return;
+      }
+    }
+
+    const finalCourierCost = selectedOrderStatus === "DELIVERED" && courierServiceCost !== "" ? Number(courierServiceCost) : undefined;
+
     await onUpdateOrder(
       order.id,
       selectedOrderStatus,
       selectedPayment,
-      adminNote.trim() || undefined
+      adminNote.trim() || undefined,
+      finalCourierCost
     );
     onClose();
   };
@@ -135,6 +156,25 @@ export const UpdateOrderModal: React.FC<UpdateOrderModalProps> = ({
             )}
           </div>
 
+          {/* Courier Service Cost (Shown & Required ONLY when DELIVERED) */}
+          {selectedOrderStatus === "DELIVERED" && (
+            <div>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5 uppercase tracking-wider">
+                Courier Service Cost <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                required
+                placeholder="Enter courier service cost"
+                value={courierServiceCost}
+                onChange={(e) => setCourierServiceCost(e.target.value === "" ? "" : Number(e.target.value))}
+                className="w-full px-3.5 py-2.5 text-xs font-extrabold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-200 cursor-pointer"
+              />
+            </div>
+          )}
+
           {/* Optional Admin Note */}
           <div>
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1.5">
@@ -182,3 +222,4 @@ export const UpdateOrderModal: React.FC<UpdateOrderModalProps> = ({
     </div>
   );
 };
+

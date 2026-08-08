@@ -22,9 +22,9 @@ export const couponApi = baseApi.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.map(({ id }) => ({ type: 'Coupons' as const, id })),
-              { type: 'Coupons', id: 'LIST' },
-            ]
+            ...result.map(({ id }) => ({ type: 'Coupons' as const, id })),
+            { type: 'Coupons', id: 'LIST' },
+          ]
           : [{ type: 'Coupons', id: 'LIST' }],
     }),
 

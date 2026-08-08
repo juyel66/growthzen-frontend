@@ -9,11 +9,13 @@ import {
   useUpdateOrderStatusMutation,
   useCancelOrderMutation,
 } from "@/services/orderApi";
+import { useLazyGetInvoiceByOrderIdQuery } from "@/services/invoiceApi";
 import { useApprovePaymentMutation } from "@/services/paymentApi";
 
 import { OrderTimeline } from "@/components/admin/order/OrderTimeline";
 import { UpdateOrderModal } from "@/components/admin/order/UpdateOrderModal";
 import { TrackOrderModal } from "@/components/admin/order/TrackOrderModal";
+import { OrderInvoiceModal } from "@/components/admin/order/OrderInvoiceModal";
 import { OrderStatus } from "@/types/order";
 
 import {
@@ -39,7 +41,7 @@ import Swal from "sweetalert2";
 const formatCurrency = (val: number | undefined) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -67,6 +69,9 @@ export default function OrderDetailsPage() {
   // Modals state
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState<boolean>(false);
   const [isTrackModalOpen, setIsTrackModalOpen] = useState<boolean>(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState<boolean>(false);
+
+  const [triggerGetInvoice, { data: invoiceData, isLoading: isFetchingInvoice }] = useLazyGetInvoiceByOrderIdQuery();
 
   if (isLoading) {
     return (
@@ -105,12 +110,14 @@ export default function OrderDetailsPage() {
   const items = order.items || [];
   const isSaving = isUpdatingStatus || isApprovingPayment;
   const isPaid = order.payment?.status === "PAID";
+  const isDelivered = (order.status || "").toUpperCase() === "DELIVERED";
 
   const handleUpdateOrderSubmit = async (
     orderId: string,
     newStatus: OrderStatus,
     paymentStatus: "Paid" | "Unpaid",
-    adminNote?: string
+    adminNote?: string,
+    courierServiceCost?: number
   ) => {
     try {
       // 1. Update order status
@@ -118,6 +125,7 @@ export default function OrderDetailsPage() {
         id: orderId,
         status: newStatus,
         adminNote,
+        courierServiceCost,
       }).unwrap();
 
       // 2. If Payment is marked Paid & payment record exists and not yet paid, approve payment
@@ -175,6 +183,17 @@ export default function OrderDetailsPage() {
           text: err?.data?.message || "Could not cancel order.",
         });
       }
+    }
+  };
+
+  const handlePrintInvoiceClick = async () => {
+    if (!isDelivered) return;
+    try {
+      await triggerGetInvoice(order.id).unwrap();
+    } catch {
+      // Allow modal fallback to order details if API response is delayed
+    } finally {
+      setIsInvoiceModalOpen(true);
     }
   };
 
@@ -236,20 +255,34 @@ export default function OrderDetailsPage() {
           )}
 
           <button
-            disabled
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-400 bg-slate-100 rounded-xl opacity-50 cursor-not-allowed"
+            onClick={handlePrintInvoiceClick}
+            disabled={!isDelivered || isFetchingInvoice}
+            className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
+              isDelivered
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 opacity-50 cursor-not-allowed"
+            }`}
+            title={!isDelivered ? "Invoice print is only enabled for DELIVERED orders" : "Print Invoice"}
           >
-            <Printer className="w-4 h-4" />
-            <span>Print Invoice</span>
+            <Printer className={`w-4 h-4 ${isFetchingInvoice ? "animate-spin" : ""}`} />
+            <span>{isFetchingInvoice ? "Fetching Invoice..." : "Print Invoice"}</span>
           </button>
         </div>
       </div>
 
-      {/* Visual Status Progress Timeline */}
-      <OrderTimeline status={order.status} />
+      {/* Visual Status Progress Timeline & Order Update History */}
+      <OrderTimeline
+        status={order.status}
+        productCost={order.productCost}
+        courierServiceCost={order.courierServiceCost}
+        courierCost={order.courierCost}
+        deliveryProfit={order.deliveryProfit}
+        courierProfit={order.courierProfit}
+        netProfit={order.netProfit}
+      />
 
-      {/* 3 Grid Cards: Customer Info, Shipping Address, Payment Details */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* 4 Grid Cards: Customer Info, Shipping Address, Payment Details, Business Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Customer Info Card */}
         <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xs space-y-3">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -354,6 +387,60 @@ export default function OrderDetailsPage() {
                 <span className="font-mono font-bold text-blue-600">{order.payment.transactionId}</span>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Business Summary Card */}
+        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-emerald-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Business Summary
+              </h3>
+            </div>
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200">
+              Accounting
+            </span>
+          </div>
+
+          <div className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Gross Sales:</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100">
+                {isDelivered && order.grossSales != null ? formatCurrency(order.grossSales) : "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-slate-500">Product Cost:</span>
+              <span className="font-bold"> -
+                {isDelivered && order.productCost != null ? formatCurrency(order.productCost) : "--"}
+              </span>
+            </div>
+
+            <div className="flex justify-between">
+              <span className="text-slate-500">Courier Service Cost:</span>
+              <span className="font-bold">-
+                {isDelivered && order.courierServiceCost != null ? formatCurrency(order.courierServiceCost) : "--"}
+              </span>
+            </div>
+
+            {/* <div className="flex justify-between">
+              <span className="text-slate-500">Courier Profit:</span>
+              <span className="font-bold">
+                {isDelivered && (order.deliveryProfit ?? order.courierProfit) != null
+                  ? formatCurrency(order.deliveryProfit ?? order.courierProfit!)
+                  : "--"}
+              </span>
+            </div> */}
+
+            <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800 font-extrabold text-xs">
+              <span className="text-slate-900 dark:text-slate-100">Net Profit:</span>
+              <span className="text-emerald-600 dark:text-emerald-400">
+                {isDelivered && order.netProfit != null ? formatCurrency(order.netProfit) : "--"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -506,6 +593,15 @@ export default function OrderDetailsPage() {
         order={order}
         isOpen={isTrackModalOpen}
         onClose={() => setIsTrackModalOpen(false)}
+      />
+
+      {/* Official Tax Invoice Print Modal */}
+      <OrderInvoiceModal
+        isOpen={isInvoiceModalOpen}
+        onClose={() => setIsInvoiceModalOpen(false)}
+        invoiceData={invoiceData}
+        fallbackOrder={order}
+        isLoading={isFetchingInvoice}
       />
     </div>
   );

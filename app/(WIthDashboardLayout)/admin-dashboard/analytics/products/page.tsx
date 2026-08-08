@@ -19,7 +19,7 @@ import {
 const formatCurrency = (val: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: "USD",
+    currency: "BDT", currencyDisplay: "narrowSymbol",
   }).format(val || 0);
 };
 
@@ -200,3 +200,4 @@ export default function ProductAnalyticsPage() {
     </div>
   );
 }
+

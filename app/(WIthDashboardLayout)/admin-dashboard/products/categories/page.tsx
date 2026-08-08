@@ -6,3 +6,4 @@ import AdminCategoriesPage from '@/app/(WIthDashboardLayout)/admin-dashboard/cat
 export default function AdminProductsCategoriesPage() {
   return <AdminCategoriesPage />;
 }
+

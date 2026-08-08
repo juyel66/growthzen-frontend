@@ -153,6 +153,50 @@ export const TrackOrderModal: React.FC<TrackOrderModalProps> = ({
                 </div>
               )}
 
+              {/* Delivered Accounting History Snapshot */}
+              {currentStatus === "DELIVERED" && (
+                <div className="p-3.5 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 space-y-2">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>Delivered Accounting History</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-[11px] text-center pt-1">
+                    <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-400 block font-bold text-[10px] uppercase">Courier Cost</span>
+                      <span className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5 block">
+                        {(order.courierServiceCost ?? order.courierCost) != null
+                          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "BDT", currencyDisplay: "narrowSymbol" }).format(
+                            (order.courierServiceCost ?? order.courierCost)!
+                          )
+                          : "--"}
+                      </span>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-400 block font-bold text-[10px] uppercase">Courier Profit</span>
+                      <span className="font-extrabold text-blue-600 dark:text-blue-400 mt-0.5 block">
+                        {(order.deliveryProfit ?? order.courierProfit) != null
+                          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "BDT", currencyDisplay: "narrowSymbol" }).format(
+                            (order.deliveryProfit ?? order.courierProfit)!
+                          )
+                          : "--"}
+                      </span>
+                    </div>
+
+                    <div className="p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+                      <span className="text-slate-400 block font-bold text-[10px] uppercase">Net Profit</span>
+                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                        {order.netProfit != null
+                          ? new Intl.NumberFormat("en-US", { style: "currency", currency: "BDT", currencyDisplay: "narrowSymbol" }).format(
+                            order.netProfit
+                          )
+                          : "--"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Delivery Address Snapshot */}
               <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -181,3 +225,4 @@ export const TrackOrderModal: React.FC<TrackOrderModalProps> = ({
     </div>
   );
 };
+

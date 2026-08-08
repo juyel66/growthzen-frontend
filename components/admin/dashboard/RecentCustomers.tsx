@@ -90,3 +90,4 @@ export const RecentCustomers: React.FC<RecentCustomersProps> = ({
     </div>
   );
 };
+

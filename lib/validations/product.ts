@@ -10,11 +10,26 @@ export const productFormSchema = z.object({
   shortDescription: z.string().trim().min(10, 'Short description must be at least 10 characters').max(500, 'Short description cannot exceed 500 characters'),
   description: z.string().trim().min(10, 'Description must be at least 10 characters').max(20000, 'Description is too long'),
   categoryId: z.string().trim().min(1, 'Please select a category'),
-  productCode: z.string().trim().min(1, 'Product code is required').max(100).regex(/^[A-Za-z0-9._-]+$/, 'Product code contains invalid characters'),
+  productCode: z
+    .string()
+    .trim()
+    .min(1, 'Product code (SKU) is required')
+    .max(100, 'Product code cannot exceed 100 characters')
+    .transform((val) => val.toUpperCase())
+    .refine(
+      (val) => /^[A-Z]{3,}-[A-Z0-9]{4,20}$/.test(val),
+      {
+        message: 'Product code must follow PREFIX-SUFFIX format (e.g. MOB-EY4EM7OG, 3+ letter prefix, hyphen, 4-20 alphanumeric suffix)',
+      }
+    ),
   barcode: z.string().trim().optional().nullable(),
   costPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ required_error: 'Cost price is required', invalid_type_error: 'Cost price is required' }).positive('Cost price must be greater than 0')),
   customerSellPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ required_error: 'Customer sell price is required', invalid_type_error: 'Customer sell price is required' }).positive('Customer sell price must be greater than 0')),
-  resellerPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ required_error: 'Reseller price is required', invalid_type_error: 'Reseller price is required' }).positive('Reseller price must be greater than 0')),
+  enableCustomerSpecialPrice: z.boolean().default(false),
+  customerSpecialPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(v)), z.number().positive('Customer special price must be greater than 0').optional().nullable()),
+  resellerPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? undefined : Number(v)), z.number({ required_error: 'Reseller sell price is required', invalid_type_error: 'Reseller sell price is required' }).positive('Reseller sell price must be greater than 0')),
+  enableResellerSpecialPrice: z.boolean().default(false),
+  resellerSpecialPrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(v)), z.number().positive('Reseller special price must be greater than 0').optional().nullable()),
   salePrice: z.preprocess((v) => (v === '' || v === null || v === undefined ? null : Number(v)), z.number().positive('Sale price must be greater than 0').optional().nullable()),
   specialSaleEnabled: z.boolean().default(false),
   discountEnabled: z.boolean().default(false),
@@ -51,3 +66,4 @@ export const productFormSchema = z.object({
 });
 
 export type ProductFormValues = z.infer<typeof productFormSchema>;
+
