@@ -5,6 +5,10 @@ import { UserManagementItem } from "@/types/userManagement";
 import { Eye, Edit2, Trash2, Users, ShieldCheck, UserCheck } from "lucide-react";
 import { OrderTableSkeletonRow } from "@/components/ui/TableSkeleton";
 
+import { useAppSelector } from "@/redux/hooks";
+import { selectCurrentUser } from "@/features/auth/authSlice";
+import { isProtectedSuperAdmin } from "@/constants/protectedUsers";
+
 interface UserTableProps {
   users: UserManagementItem[];
   onViewUser: (user: UserManagementItem) => void;
@@ -61,6 +65,8 @@ export const UserTable: React.FC<UserTableProps> = ({
   isLoading = false,
   isDeletingId = null,
 }) => {
+  const currentUser = useAppSelector(selectCurrentUser);
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xs overflow-hidden">
       <div className="overflow-x-auto">
@@ -85,6 +91,9 @@ export const UserTable: React.FC<UserTableProps> = ({
                 const displayName = user.name || user.fullName || "Unnamed User";
                 const avatarUrl = user.avatar || user.avatarUrl || user.profileImage;
                 const isDeleting = isDeletingId === user.id;
+                const isSuperAdminUser = (user.role || "").toUpperCase() === "SUPER_ADMIN" || isProtectedSuperAdmin(user.email, user.role);
+                const isSelf = currentUser?.id === user.id;
+
 
                 return (
                   <tr
@@ -149,8 +158,19 @@ export const UserTable: React.FC<UserTableProps> = ({
                         {/* Edit Role */}
                         <button
                           onClick={() => onEditUserRole(user)}
-                          className="p-1.5 rounded-lg border border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/40 hover:bg-purple-100 transition cursor-pointer"
-                          title="Edit User Role"
+                          disabled={isSuperAdminUser || isSelf}
+                          className={`p-1.5 rounded-lg border transition ${
+                            isSuperAdminUser || isSelf
+                              ? "opacity-30 border-slate-200 text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
+                              : "border-purple-200 dark:border-purple-800 text-purple-600 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-950/40 hover:bg-purple-100 cursor-pointer"
+                          }`}
+                          title={
+                            isSuperAdminUser
+                              ? "Super Admin accounts are immutable"
+                              : isSelf
+                              ? "You cannot change your own role"
+                              : "Edit User Role"
+                          }
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -158,9 +178,19 @@ export const UserTable: React.FC<UserTableProps> = ({
                         {/* Delete */}
                         <button
                           onClick={() => onDeleteUser(user)}
-                          disabled={isDeleting}
-                          className="p-1.5 rounded-lg border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/40 hover:bg-rose-100 disabled:opacity-40 transition cursor-pointer"
-                          title="Delete User"
+                          disabled={isDeleting || isSuperAdminUser || isSelf}
+                          className={`p-1.5 rounded-lg border transition ${
+                            isDeleting || isSuperAdminUser || isSelf
+                              ? "opacity-30 border-slate-200 text-slate-400 bg-slate-100 dark:bg-slate-800 cursor-not-allowed"
+                              : "border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 bg-rose-50/50 dark:bg-rose-950/40 hover:bg-rose-100 cursor-pointer"
+                          }`}
+                          title={
+                            isSuperAdminUser
+                              ? "Super Admin accounts cannot be deleted"
+                              : isSelf
+                              ? "You cannot delete your own account"
+                              : "Delete User"
+                          }
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
