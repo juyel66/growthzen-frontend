@@ -3,7 +3,10 @@
 import React from "react";
 import { useGetUserByIdQuery } from "@/services/userManagementApi";
 import { UserManagementItem } from "@/types/userManagement";
-import { X, User as UserIcon, Mail, Phone, ShieldCheck, Calendar, Hash, Loader2 } from "lucide-react";
+import { useAppSelector } from "@/redux/hooks";
+import { selectCurrentUser, selectUserRole } from "@/features/auth/authSlice";
+import { isProtectedSuperAdmin } from "@/constants/protectedUsers";
+import { X, User as UserIcon, Mail, Phone, ShieldCheck, Calendar, Hash, Loader2, AlertTriangle } from "lucide-react";
 
 interface ViewUserModalProps {
   userId: string | null;
@@ -16,6 +19,10 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const currentUser = useAppSelector(selectCurrentUser);
+  const userRoleState = useAppSelector(selectUserRole);
+  const currentUserRole = (currentUser?.role || userRoleState || "").toUpperCase();
+
   const { data: fetchedUser, isLoading, isError } = useGetUserByIdQuery(userId || "", {
     skip: !isOpen || !userId,
   });
@@ -23,6 +30,9 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
   if (!isOpen || !userId) return null;
 
   const user = fetchedUser;
+  const isProtectedTarget = Boolean(user && isProtectedSuperAdmin(user.email, user.role));
+  const isForbiddenForAdmin = currentUserRole === "ADMIN" && isProtectedTarget;
+
   const displayName = user?.name || user?.fullName || "N/A";
   const avatarUrl = user?.avatar || user?.avatarUrl || user?.profileImage;
 
@@ -85,6 +95,12 @@ export const ViewUserModal: React.FC<ViewUserModalProps> = ({
             <div className="py-12 flex flex-col items-center justify-center gap-3">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
               <span className="text-xs font-semibold text-slate-500">Loading user profile...</span>
+            </div>
+          ) : isForbiddenForAdmin ? (
+            <div className="py-8 text-center space-y-2">
+              <AlertTriangle className="w-8 h-8 text-amber-600 mx-auto" />
+              <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Access Restricted</p>
+              <p className="text-xs text-slate-400">Super Admin user profile details cannot be accessed.</p>
             </div>
           ) : isError || !user ? (
             <div className="py-8 text-center space-y-2">
