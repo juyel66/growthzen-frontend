@@ -4,6 +4,14 @@ export interface ParentCategoryInfo {
   slug: string;
 }
 
+export interface SubCategoryInfo {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -13,6 +21,8 @@ export interface Category {
   parentCategoryId?: string | null;
   parentCategory?: ParentCategoryInfo | Category | null;
   parent?: ParentCategoryInfo | Category | null;
+  subCategories?: SubCategoryInfo[] | Category[] | null;
+  subcategories?: SubCategoryInfo[] | Category[] | null;
   discountPercentage?: number;
   discountEnabled?: boolean;
   sortOrder?: number;
@@ -21,8 +31,9 @@ export interface Category {
   metaTitle?: string | null;
   metaDescription?: string | null;
   productCount?: number;
-  createdAt: string;
-  updatedAt: string;
+  productsCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateCategoryInput {

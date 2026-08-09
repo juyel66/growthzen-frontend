@@ -44,7 +44,8 @@ export const ProfileMenu = () => {
     }
   };
 
-  const dashboardPath = getRoleDashboardPath(user?.role);
+  const isStaffRole = user?.role && ['ADMIN', 'SUPER_ADMIN'].includes(user.role.toUpperCase());
+  const dashboardPath = isStaffRole ? '/admin-dashboard/dashboard' : '/user-dashboard/dashboard';
 
   return (
     <div

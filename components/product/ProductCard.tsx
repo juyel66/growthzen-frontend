@@ -218,6 +218,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, className = '
                 {title}
               </h3>
             </Link>
+
+            {/* SKU & Stock Status */}
+            <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-0.5">
+              {(product.productCode || product.sku) ? (
+                <span className="font-mono text-slate-400">
+                  SKU: {product.productCode || product.sku}
+                </span>
+              ) : (
+                <span />
+              )}
+              {product.quantity !== undefined && (
+                <span className={`font-semibold ${product.quantity > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-500'}`}>
+                  {product.quantity > 0 ? 'In Stock' : 'Out of Stock'}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Price & Action Buttons */}

@@ -58,6 +58,8 @@ export interface OrderView {
   orderCode: string;
   userId?: string | null;
   userEmail?: string | null;
+  orderedByRole?: string | null;
+  orderRole?: string | null;
   customerEmail?: string | null;
   customerName: string;
   customerPhone: string;

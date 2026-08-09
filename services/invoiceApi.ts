@@ -34,6 +34,9 @@ export interface PublicInvoiceData {
   phone?: string;
   customerEmail?: string;
   email?: string;
+  customerRole?: string;
+  role?: string;
+  orderedByRole?: string;
   shippingAddress?: string;
   address?: string;
   district?: string;
@@ -116,6 +119,18 @@ export const invoiceApi = baseApi.injectEndpoints({
         return response?.data ?? response;
       },
     }),
+
+    getMyInvoices: builder.query<InvoiceListItem[], void>({
+      query: () => ({
+        url: '/invoices/my-invoices',
+        method: 'GET',
+      }),
+      transformResponse: (response: any) => {
+        const data = response?.data ?? response;
+        return Array.isArray(data) ? data : [];
+      },
+      providesTags: ['Orders'],
+    }),
   }),
   overrideExisting: true,
 });
@@ -123,7 +138,9 @@ export const invoiceApi = baseApi.injectEndpoints({
 export const {
   useGetInvoicesQuery,
   useLazyGetInvoicesQuery,
+  useGetMyInvoicesQuery,
   useGetInvoiceByOrderIdQuery,
   useLazyGetInvoiceByOrderIdQuery,
   useVerifyInvoiceByTokenQuery,
 } = invoiceApi;
+

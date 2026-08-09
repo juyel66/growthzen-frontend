@@ -20,7 +20,7 @@ export class DefaultUploadProvider implements IUploadProvider {
       throw new Error('Upload cancelled');
     }
 
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://growthzen-it-backend.onrender.com/api';
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000//api';
     const apiBase = rawApiUrl.replace(/\/+৳/, '');
     const endpoints = [
       `${apiBase}/upload`,

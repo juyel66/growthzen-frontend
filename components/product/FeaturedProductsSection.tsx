@@ -33,7 +33,7 @@ export const FeaturedProductsSection: React.FC = () => {
             </p>
           </div>
 
-          <Link href="/products">
+          <Link href="/shop">
             <Button variant="outline" size="sm" className="cursor-pointer font-bold">
               View All Catalog <ArrowRight className="w-4 h-4 ml-1" />
             </Button>

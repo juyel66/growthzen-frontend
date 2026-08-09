@@ -121,7 +121,7 @@ export function formatImageUrl(url: string | null | undefined, fallback: string 
     return trimmed;
   }
 
-  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://growthzen-it-backend.onrender.com/api';
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000//api';
   const backendBase = rawApiUrl.replace(/\/api\/?৳/i, '').replace(/\/+৳/, '');
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${backendBase}${cleanPath}`;

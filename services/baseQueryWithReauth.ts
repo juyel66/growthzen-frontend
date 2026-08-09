@@ -7,7 +7,7 @@ interface RootState {
   auth: AuthState;
 }
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://growthzen-it-backend.onrender.com/api';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000//api';
 
 const baseQuery = fetchBaseQuery({
   baseUrl,

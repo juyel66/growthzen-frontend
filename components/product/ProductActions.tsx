@@ -308,47 +308,48 @@ return (
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2 w-full">
           <Button
             variant="primary"
             size="lg"
             onClick={handleAddToCart}
             isLoading={isAdding}
             disabled={isAdding}
-            className="flex-1 cursor-pointer font-bold shadow-md hover:shadow-lg transition-all"
+            className="w-full sm:w-auto sm:flex-1 h-12 text-sm sm:text-base font-bold justify-center items-center cursor-pointer shadow-md hover:shadow-lg transition-all whitespace-nowrap"
           >
-            {!isAdding && <ShoppingCart className="w-5 h-5 mr-2" />}
-            {isAdding ? 'Adding To Cart...' : 'Add To Cart'}
+            {!isAdding && <ShoppingCart className="w-5 h-5 mr-2 shrink-0" />}
+            <span>{isAdding ? 'Adding To Cart...' : 'Add To Cart'}</span>
           </Button>
 
           <Button
             variant="secondary"
             size="lg"
             onClick={handleBuyNow}
-            className="flex-1 cursor-pointer font-bold shadow-sm"
+            className="w-full sm:w-auto sm:flex-1 h-12 text-sm sm:text-base font-bold justify-center items-center cursor-pointer shadow-sm whitespace-nowrap"
           >
-            <Zap className="w-5 h-5 mr-2" /> Buy Now
+            <Zap className="w-5 h-5 mr-2 shrink-0" />
+            <span>Buy Now</span>
           </Button>
         </div>
       </>
     )}
 
     {/* Secondary Actions: Wishlist & Share */}
-    <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+    <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 w-full">
       <WishlistButton
         productId={product.id}
         productTitle={product.title || product.name}
         variant="button"
-        className="flex-1"
+        className="flex-1 min-w-[140px]"
       />
 
       <Button
         variant="ghost"
         size="default"
         onClick={handleShare}
-        className="cursor-pointer text-slate-600 dark:text-slate-400"
+        className="flex-1 min-w-[140px] cursor-pointer text-slate-600 dark:text-slate-400 justify-center items-center"
       >
-        <Share2 className="w-4 h-4 mr-2" /> Share Product
+        <Share2 className="w-4 h-4 mr-2 shrink-0" /> Share Product
       </Button>
     </div>
   </div>

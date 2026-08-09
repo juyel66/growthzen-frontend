@@ -8,6 +8,9 @@ export interface InvoiceListItem {
   customerName: string;
   customerPhone: string;
   customerEmail?: string;
+  customerRole?: string;
+  role?: string;
+  orderedByRole?: string;
   grandTotal: number;
   totalAmount?: number;
   payableAmount?: number;

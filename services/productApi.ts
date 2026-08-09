@@ -80,6 +80,30 @@ export const productApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Products'],
     }),
+    getBestSellers: builder.query<Product[], void>({
+      query: () => '/products/best-sellers',
+      transformResponse: (response: any) => {
+        if (!response) return [];
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response.data)) return response.data;
+        if (Array.isArray(response.products)) return response.products;
+        if (response.data && Array.isArray(response.data.products)) return response.data.products;
+        return [];
+      },
+      providesTags: ['Products'],
+    }),
+    getOffers: builder.query<Product[], void>({
+      query: () => '/products/offers',
+      transformResponse: (response: any) => {
+        if (!response) return [];
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response.data)) return response.data;
+        if (Array.isArray(response.products)) return response.products;
+        if (response.data && Array.isArray(response.data.products)) return response.data.products;
+        return [];
+      },
+      providesTags: ['Products'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -87,6 +111,8 @@ export const productApi = baseApi.injectEndpoints({
 export const {
   useGetProductsQuery,
   useGetProductByIdQuery,
+  useGetBestSellersQuery,
+  useGetOffersQuery,
   useGenerateIdentifiersQuery,
   useLazyGenerateIdentifiersQuery,
   useCreateProductMutation,

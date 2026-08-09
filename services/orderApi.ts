@@ -145,6 +145,30 @@ export const orderApi = baseApi.injectEndpoints({
       providesTags: ['Orders'],
     }),
 
+    getMyOrders: builder.query<OrderListResponse, OrderQueryParams | void>({
+      query: (params) => ({
+        url: '/orders/my-orders',
+        method: 'GET',
+        params: params || undefined,
+      }),
+      transformResponse: (response: unknown) => {
+        if (!response) return { items: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+        const raw = (response as { data?: any })?.data ?? response;
+        if (raw && Array.isArray(raw.items)) {
+          return raw as OrderListResponse;
+        }
+        if (Array.isArray(raw)) {
+          const list = raw as OrderView[];
+          return {
+            items: list,
+            meta: { page: 1, limit: list.length || 10, total: list.length, totalPages: 1 },
+          };
+        }
+        return { items: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+      },
+      providesTags: ['Orders'],
+    }),
+
     getOrderInvoice: builder.query<any, string>({
       query: (id) => `/orders/${id}/invoice`,
       transformResponse: (response: any) => {
@@ -152,12 +176,33 @@ export const orderApi = baseApi.injectEndpoints({
       },
       providesTags: (result, error, id) => [{ type: 'Orders', id }],
     }),
+    getMyOrderSummary: builder.query<
+      {
+        totalOrders: number;
+        pendingOrders: number;
+        deliveredOrders: number;
+        totalPurchase: number;
+        recentOrders: OrderView[];
+      },
+      void
+    >({
+      query: () => ({
+        url: '/orders/my-summary',
+        method: 'GET',
+      }),
+      transformResponse: (response: any) => {
+        return response?.data ?? response;
+      },
+      providesTags: ['Orders', 'Dashboard'],
+    }),
   }),
   overrideExisting: true,
 });
 
 export const {
   useGetOrdersQuery,
+  useGetMyOrdersQuery,
+  useGetMyOrderSummaryQuery,
   useGetOrderSummaryQuery,
   useGetOrderByIdQuery,
   useGetOrderInvoiceQuery,
@@ -167,3 +212,5 @@ export const {
   useUpdateOrderStatusMutation,
   useCancelOrderMutation,
 } = orderApi;
+
+

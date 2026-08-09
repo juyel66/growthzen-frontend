@@ -22,6 +22,7 @@ export const baseApi = createApi({
     'CategoryDiscounts',
     'Reviews',
     'Users',
+    'ContactMessages',
   ],
   endpoints: () => ({}),
 });
