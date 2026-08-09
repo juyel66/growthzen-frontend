@@ -65,8 +65,8 @@ export function mapProductToFormValues(prod: Product): ProductFormValues {
     prod.customerSpecialPrice !== undefined && prod.customerSpecialPrice !== null
       ? prod.customerSpecialPrice
       : prod.salePrice !== undefined && prod.salePrice !== null
-      ? prod.salePrice
-      : null;
+        ? prod.salePrice
+        : null;
   const hasCustSpecial = Boolean(custSpecial !== null && Number(custSpecial) > 0);
 
   const resSpecial =
