@@ -18,7 +18,7 @@ export const BannerButtons: React.FC<BannerButtonsProps> = ({
   secondaryUrl = '/about',
 }) => {
   return (
-    <div className="flex flex-wrap items-center gap-3.5 mt-2 justify-start w-full">
+    <div className="flex flex-wrap items-center gap-3.5 mt-2 justify-start w-full mb-10">
       <Link href={primaryUrl} passHref>
         <Button variant="primary" size="large" className="px-8 font-semibold shadow-sm cursor-pointer">
           {primaryText}
