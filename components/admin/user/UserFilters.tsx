@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Search, Filter, ArrowUpDown, RefreshCw } from "lucide-react";
+import { useAppSelector } from "@/redux/hooks";
+import { selectCurrentUser, selectUserRole } from "@/features/auth/authSlice";
 
 interface UserFiltersProps {
   search: string;
@@ -27,6 +29,10 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   onReset,
 }) => {
   const [searchInput, setSearchInput] = useState(search);
+  const currentUser = useAppSelector(selectCurrentUser);
+  const userRole = useAppSelector(selectUserRole);
+  const role = (currentUser?.role || userRole || "").toUpperCase();
+  const isSuperAdmin = role === "SUPER_ADMIN";
 
   // Debounce search input
   useEffect(() => {
@@ -71,7 +77,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
               <option value="CUSTOMER">Customer</option>
               <option value="RESELLER">Reseller</option>
               <option value="ADMIN">Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
+              {isSuperAdmin && <option value="SUPER_ADMIN">Super Admin</option>}
             </select>
           </div>
 
