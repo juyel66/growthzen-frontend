@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from "react";
 import { UserManagementItem, UserRole } from "@/types/userManagement";
 import { useUpdateUserRoleMutation } from "@/services/userManagementApi";
-import { X, ShieldCheck, Loader2 } from "lucide-react";
+import { useAppSelector } from "@/redux/hooks";
+import { selectCurrentUser } from "@/features/auth/authSlice";
+import { isProtectedSuperAdmin } from "@/constants/protectedUsers";
+import { X, ShieldCheck, Loader2, AlertTriangle } from "lucide-react";
 import Swal from "sweetalert2";
 
 interface EditUserRoleModalProps {
@@ -19,12 +22,18 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const currentUser = useAppSelector(selectCurrentUser);
   const [selectedRole, setSelectedRole] = useState<UserRole | string>("CUSTOMER");
   const [updateUserRole, { isLoading }] = useUpdateUserRoleMutation();
 
+  const isSelf = Boolean(user && currentUser?.id === user.id);
+  const isSuperAdminTarget = Boolean(user && isProtectedSuperAdmin(user.email, user.role));
+  const isForbiddenToEdit = isSelf || isSuperAdminTarget;
+
   useEffect(() => {
     if (user) {
-      setSelectedRole((user.role || "CUSTOMER").toUpperCase());
+      const role = (user.role || "CUSTOMER").toUpperCase();
+      setSelectedRole(role === "SUPER_ADMIN" ? "ADMIN" : role);
     }
   }, [user]);
 
@@ -32,6 +41,17 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isForbiddenToEdit) {
+      Swal.fire({
+        icon: "error",
+        title: "Role Change Restricted",
+        text: isSelf
+          ? "You cannot change your own role."
+          : "Super Admin roles are immutable.",
+      });
+      return;
+    }
 
     try {
       await updateUserRole({ id: user.id, role: selectedRole }).unwrap();
@@ -88,16 +108,27 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({
             <p className="text-xs text-slate-500 font-medium">{user.email || user.phone || user.id}</p>
           </div>
 
+          {isForbiddenToEdit && (
+            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2 font-medium">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                {isSelf
+                  ? "You cannot change your own user role."
+                  : "Super Admin account roles cannot be modified."}
+              </span>
+            </div>
+          )}
+
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
               Select Platform Role *
             </label>
             <select
               value={selectedRole}
+              disabled={isForbiddenToEdit}
               onChange={(e) => setSelectedRole(e.target.value as UserRole)}
-              className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+              className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 cursor-pointer"
             >
-              <option value="SUPER_ADMIN">Super Admin</option>
               <option value="ADMIN">Admin</option>
               <option value="CUSTOMER">Customer</option>
               <option value="RESELLER">Reseller</option>
@@ -115,7 +146,7 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isForbiddenToEdit}
               className="flex items-center gap-2 px-5 py-2.5 text-xs font-extrabold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl transition shadow-xs cursor-pointer"
             >
               {isLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
@@ -127,3 +158,4 @@ export const EditUserRoleModal: React.FC<EditUserRoleModalProps> = ({
     </div>
   );
 };
+
