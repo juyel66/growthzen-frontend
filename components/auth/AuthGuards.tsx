@@ -9,16 +9,13 @@ import SessionRestoreLoader from './SessionRestoreLoader';
 import { getPendingRedirectUrl, sanitizeRedirectUrl } from '@/hooks/useProtectedAction';
 
 export function getRoleDashboardPath(role?: UserRole | string | null): string {
-  if (!role) return '/user-dashboard/dashboard';
+  if (!role) return '/';
 
   const normalized = role.toUpperCase();
   if (normalized === 'ADMIN' || normalized === 'SUPER_ADMIN') {
     return '/admin-dashboard/dashboard';
   }
-  if (normalized === 'RESELLER') {
-    return '/user-dashboard/dashboard';
-  }
-  return '/user-dashboard/dashboard';
+  return '/';
 }
 
 interface GuardProps {
