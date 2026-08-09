@@ -1,12 +1,17 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { UserManagementItem } from "@/types/userManagement";
 import {
   useGetUsersQuery,
   useGetUserStatsQuery,
   useDeleteUserMutation,
 } from "@/services/userManagementApi";
+import { useAppSelector } from "@/redux/hooks";
+import { selectCurrentUser, selectUserRole } from "@/features/auth/authSlice";
+import { isProtectedSuperAdmin } from "@/constants/protectedUsers";
+import { getRoleDashboardPath, RoleGuard } from "@/components/auth/AuthGuards";
 
 import { UserSummaryCards } from "@/components/admin/user/UserSummaryCards";
 import { UserFilters } from "@/components/admin/user/UserFilters";
@@ -18,6 +23,19 @@ import { Users, RefreshCw, AlertTriangle, ChevronLeft, ChevronRight } from "luci
 import Swal from "sweetalert2";
 
 export default function UserManagementPage() {
+  return (
+    <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+      <UserManagementContent />
+    </RoleGuard>
+  );
+}
+
+function UserManagementContent() {
+  const router = useRouter();
+  const currentUser = useAppSelector(selectCurrentUser);
+  const userRoleState = useAppSelector(selectUserRole);
+  const currentUserRole = (currentUser?.role || userRoleState || "").toUpperCase();
+
   const [page, setPage] = useState<number>(1);
   const [limit, setLimit] = useState<number>(10);
   const [search, setSearch] = useState<string>("");
@@ -42,6 +60,7 @@ export default function UserManagementPage() {
     isLoading: isUsersLoading,
     isFetching: isUsersFetching,
     isError: isUsersError,
+    error: usersError,
     refetch: refetchUsers,
   } = useGetUsersQuery({
     page,
@@ -62,11 +81,60 @@ export default function UserManagementPage() {
   const [deleteUserMutation, { isLoading: isDeletingUser }] = useDeleteUserMutation();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Gracefully handle HTTP 403 Forbidden
+  useEffect(() => {
+    const errStatus = (usersError as any)?.status || (usersError as any)?.originalStatus;
+    if (errStatus === 403) {
+      const fallback = getRoleDashboardPath(currentUserRole);
+      router.replace(fallback);
+    }
+  }, [usersError, currentUserRole, router]);
+
   const usersList = responseData?.items || responseData?.users || [];
   const meta = responseData?.meta || { page: 1, limit: 10, total: usersList.length, totalPages: 1 };
   const summary = responseData?.summary;
 
+  // Filter out protected Super Admin users for ADMIN role
+  const visibleUsers = useMemo(() => {
+    if (currentUserRole === "SUPER_ADMIN") {
+      return usersList;
+    }
+    // For ADMIN role: hide all SUPER_ADMIN role users and matching protected emails
+    return usersList.filter(
+      (user) =>
+        (user.role || "").toUpperCase() !== "SUPER_ADMIN" &&
+        !isProtectedSuperAdmin(user.email, user.role)
+    );
+  }, [usersList, currentUserRole]);
+
+  const visibleTotal = useMemo(() => {
+    if (currentUserRole === "SUPER_ADMIN") {
+      return meta.total || usersList.length;
+    }
+    const hiddenCount = usersList.length - visibleUsers.length;
+    return Math.max(0, (meta.total || usersList.length) - hiddenCount);
+  }, [meta.total, usersList.length, visibleUsers.length, currentUserRole]);
+
   const handleDeleteUserSubmit = async (user: UserManagementItem) => {
+    // Prevent self-deletion or protected Super Admin deletion in UI
+    if (currentUser?.id === user.id) {
+      Swal.fire({
+        icon: "error",
+        title: "Action Restricted",
+        text: "You cannot delete your own account.",
+      });
+      return;
+    }
+
+    if (isProtectedSuperAdmin(user.email, user.role)) {
+      Swal.fire({
+        icon: "error",
+        title: "Action Restricted",
+        text: "Super Admin accounts are immutable and cannot be deleted.",
+      });
+      return;
+    }
+
     const displayName = user.name || user.fullName || user.email || user.id;
 
     const confirm = await Swal.fire({
@@ -150,7 +218,7 @@ export default function UserManagementPage() {
             <AlertTriangle className="w-5 h-5 text-rose-600" />
             <span>Failed to load user management list from backend APIs.</span>
           </div>
-          <button onClick={() => refetchUsers()} className="px-3 py-1 bg-rose-600 text-white rounded-lg text-xs font-bold">
+          <button onClick={() => refetchUsers()} className="px-3 py-1 bg-rose-600 text-white rounded-lg text-xs font-bold cursor-pointer">
             Retry
           </button>
         </div>
@@ -197,7 +265,7 @@ export default function UserManagementPage() {
 
       {/* User Table */}
       <UserTable
-        users={usersList}
+        users={visibleUsers}
         isLoading={isUsersLoading}
         isDeletingId={deletingId}
         onViewUser={(user) => setSelectedUserForView(user)}
@@ -210,7 +278,7 @@ export default function UserManagementPage() {
         <div>
           Showing page <span className="font-bold text-slate-800 dark:text-slate-200">{meta.page || page}</span> of{" "}
           <span className="font-bold text-slate-800 dark:text-slate-200">{meta.totalPages || 1}</span> (Total{" "}
-          <span className="font-bold text-slate-800 dark:text-slate-200">{meta.total || usersList.length}</span> users)
+          <span className="font-bold text-slate-800 dark:text-slate-200">{visibleTotal}</span> users)
         </div>
 
         <div className="flex items-center gap-2">
@@ -254,3 +322,4 @@ export default function UserManagementPage() {
     </div>
   );
 }
+
