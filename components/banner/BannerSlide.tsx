@@ -11,7 +11,7 @@ interface BannerSlideProps {
 
 export const BannerSlide: React.FC<BannerSlideProps> = ({ banner }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center py-4 sm:py-8 md:py-12">
+    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center py-4 sm:py-8 md:py-">
       {/* Mobile: Image on top (order-1), Text below (order-2). Desktop: Text Left, Image Right. */}
       <div className="order-2 md:order-1 md:col-span-6 flex items-center justify-start">
         <BannerContent
