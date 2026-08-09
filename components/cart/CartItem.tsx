@@ -16,11 +16,15 @@ import { useRemoveCartItemMutation } from '@/services/cartApi';
 import { useAddToWishlistMutation } from '@/services/wishlistApi';
 import Swal from 'sweetalert2';
 
+import { useAppSelector } from '@/redux/hooks';
+import { selectIsReseller } from '@/features/auth/authSlice';
+
 interface CartItemProps {
   item: CartItemType;
 }
 
 export const CartItem: React.FC<CartItemProps> = ({ item }) => {
+  const isReseller = useAppSelector(selectIsReseller);
   const product = item.product;
   const title = getProductTitle(product);
   const categoryName = getProductCategoryName(product);
@@ -29,9 +33,10 @@ export const CartItem: React.FC<CartItemProps> = ({ item }) => {
   const productSlug = product?.slug || product?.id;
   const productUrl = `/products/${productSlug}`;
 
-  const unitPrice = item.unitPrice ?? item.price ?? (product ? getProductDisplayPrice(product) : 0);
+  const unitPrice = item.unitPrice ?? item.price ?? (product ? getProductDisplayPrice(product, isReseller) : 0);
   const unitDiscount = item.unitDiscount ?? 0;
   const lineTotal = item.lineTotal ?? item.lineSubtotal ?? unitPrice * item.quantity;
+
 
   const [removeCartItem, { isLoading: isRemoving }] = useRemoveCartItemMutation();
   const [addToWishlist, { isLoading: isWishlisting }] = useAddToWishlistMutation();
