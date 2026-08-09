@@ -187,6 +187,12 @@ export default function ContactPage() {
                 >
                   My Invoices
                 </Link>
+                <Link
+                  href="/refund-policy"
+                  className="px-4 py-2 rounded-xl bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 font-bold text-xs transition cursor-pointer"
+                >
+                  Return Policy
+                </Link>
               </div>
             </div>
           </div>
