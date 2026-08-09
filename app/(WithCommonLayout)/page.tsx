@@ -1,6 +1,8 @@
 import React from 'react';
 import HeroBanner from '@/components/banner/HeroBanner';
 import FeaturedProductsSection from '@/components/product/FeaturedProductsSection';
+import BestSellersHomeSection from '@/components/product/BestSellersHomeSection';
+import OffersHomeSection from '@/components/product/OffersHomeSection';
 
 const Page = () => {
   return (
@@ -10,6 +12,12 @@ const Page = () => {
       
       {/* Featured Products Section */}
       <FeaturedProductsSection />
+
+      {/* Best Sellers Section */}
+      <BestSellersHomeSection />
+
+      {/* Offers & Deals Section */}
+      <OffersHomeSection />
     </div>
   );
 };
