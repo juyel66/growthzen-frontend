@@ -178,9 +178,9 @@ export const CategoryDetailsDrawer: React.FC<CategoryDetailsDrawerProps> = ({
                 {/* Created & Updated Dates */}
                 <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2">
                   <span className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" /> Created: {new Date(category.createdAt).toLocaleDateString()}
+                    <Calendar className="w-3 h-3" /> Created: {category.createdAt ? new Date(category.createdAt).toLocaleDateString() : 'N/A'}
                   </span>
-                  <span>Updated: {new Date(category.updatedAt).toLocaleDateString()}</span>
+                  <span>Updated: {category.updatedAt ? new Date(category.updatedAt).toLocaleDateString() : 'N/A'}</span>
                 </div>
               </div>
             </div>
