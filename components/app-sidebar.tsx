@@ -22,6 +22,10 @@ import {
   TrendingUp,
   PackageSearch,
   UserCheck,
+  ShoppingCart,
+  Heart,
+  User,
+  MessageSquare,
 } from "lucide-react";
 
 import {
@@ -35,8 +39,8 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAppDispatch } from "@/redux/hooks";
-import { logOut } from "@/features/auth/authSlice";
+import { useAppDispatch, useAppSelector } from "@/redux/hooks";
+import { logOut, selectCurrentUser, selectUserRole } from "@/features/auth/authSlice";
 import { useLogoutMutation } from "@/services/authApi";
 import { baseApi } from "@/services/baseApi";
 import Swal from "sweetalert2";
@@ -77,6 +81,11 @@ const mainAdminItems = [
     title: "User Management",
     url: "/admin-dashboard/users",
     icon: Users,
+  },
+  {
+    title: "Contact Messages",
+    url: "/admin-dashboard/contact-messages",
+    icon: MessageSquare,
   },
   {
     title: "Shipping",
@@ -136,6 +145,45 @@ const bottomAdminItems = [
   },
 ];
 
+// Reseller / Customer Navigation Taxonomy
+const resellerNavItems = [
+  {
+    title: "Dashboard",
+    url: "/user-dashboard/dashboard",
+    icon: Home,
+  },
+  {
+    title: "Products",
+    url: "/products",
+    icon: Wand2,
+  },
+  {
+    title: "Cart",
+    url: "/cart",
+    icon: ShoppingCart,
+  },
+  {
+    title: "My Orders",
+    url: "/order/my-orders",
+    icon: ListOrdered,
+  },
+  {
+    title: "My Invoices",
+    url: "/invoice/my-invoices",
+    icon: FileText,
+  },
+  {
+    title: "Wishlist",
+    url: "/wishlist",
+    icon: Heart,
+  },
+  {
+    title: "Profile",
+    url: "/auth/change-password",
+    icon: User,
+  },
+];
+
 const ACTIVE_BG = "#2D6FF8";
 const ACTIVE_TEXT = "#FFFFFF";
 const INACTIVE_TEXT = "#4B5563";
@@ -145,7 +193,13 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const currentUser = useAppSelector(selectCurrentUser);
+  const userRole = useAppSelector(selectUserRole);
   const [logoutApi] = useLogoutMutation();
+
+  const role = (currentUser?.role || userRole || "").toUpperCase();
+  const isAdminRole = role === "ADMIN" || role === "SUPER_ADMIN";
+  const isUserManagementAllowed = isAdminRole;
 
   const isAnalyticsActive = pathname?.startsWith("/admin-dashboard/analytics");
   const [analyticsOpen, setAnalyticsOpen] = useState<boolean>(isAnalyticsActive || false);
@@ -171,13 +225,22 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     }
   };
 
+  const navItemsToDisplay = isAdminRole
+    ? mainAdminItems.filter((item) => {
+        if (item.title === "User Management") {
+          return isUserManagementAllowed;
+        }
+        return true;
+      })
+    : resellerNavItems;
+
   return (
     <Sidebar className="border-r bg-white pr-2">
       <SidebarContent className="flex h-full flex-col justify-between py-4">
         {/* TOP: Logo + Navigation */}
         <div className="overflow-y-auto pr-1">
           {/* Logo Area */}
-          <div>
+          <Link href="/">
             <div className="flex items-center gap-2 px-4">
               <Image
                 src="https://res.cloudinary.com/dqkczdjjs/image/upload/v1785603633/ChatGPT_Image_Aug_1_2026_10_56_41_PM_1_vd6zar.png"
@@ -188,16 +251,16 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
               />
             </div>
             <p className="border-b px-[50px] pb-2 text-[9px] text-[#A7B2C3]">
-              Enterprise Ecommerce Admin
+              {isAdminRole ? "Enterprise Ecommerce Admin" : "Reseller Dashboard"}
             </p>
-          </div>
+          </Link>
 
           {/* Navigation Links */}
           <SidebarGroup className="mt-3">
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
-                {/* Main Menu Items */}
-                {mainAdminItems.map((item) => {
+                {/* Navigation Items */}
+                {navItemsToDisplay.map((item) => {
                   const isActive = pathname === item.url;
                   const Icon = item.icon;
 
@@ -231,97 +294,101 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
                   );
                 })}
 
-                {/* Analytics Submenu Header */}
-                <SidebarMenuItem>
-                  <button
-                    onClick={() => setAnalyticsOpen((prev) => !prev)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl font-medium text-[14px] text-slate-700 hover:bg-slate-50 transition cursor-pointer"
-                    style={{
-                      backgroundColor: isAnalyticsActive ? "#EEF3FF" : "transparent",
-                      color: isAnalyticsActive ? ACTIVE_BG : INACTIVE_TEXT,
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <BarChart3
-                        className="h-[18px] w-[18px]"
+                {/* Analytics Submenu (Admin Only) */}
+                {isAdminRole && (
+                  <>
+                    <SidebarMenuItem>
+                      <button
+                        onClick={() => setAnalyticsOpen((prev) => !prev)}
+                        className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl font-medium text-[14px] text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                         style={{
-                          color: isAnalyticsActive ? ACTIVE_BG : INACTIVE_ICON,
+                          backgroundColor: isAnalyticsActive ? "#EEF3FF" : "transparent",
+                          color: isAnalyticsActive ? ACTIVE_BG : INACTIVE_TEXT,
                         }}
-                      />
-                      <span className="font-semibold">Analytics</span>
-                    </div>
-                    {analyticsOpen ? (
-                      <ChevronDown className="h-4 w-4 text-slate-400" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 text-slate-400" />
-                    )}
-                  </button>
-                </SidebarMenuItem>
-
-                {/* Analytics Submenu Children */}
-                {analyticsOpen && (
-                  <div className="pl-6 space-y-1 my-1 border-l-2 border-slate-100 ml-5">
-                    {analyticsSubItems.map((sub) => {
-                      const isSubActive = pathname === sub.url;
-                      const SubIcon = sub.icon;
-
-                      return (
-                        <Link
-                          key={sub.title}
-                          href={sub.url}
-                          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                          style={{
-                            backgroundColor: isSubActive ? ACTIVE_BG : "transparent",
-                            color: isSubActive ? ACTIVE_TEXT : INACTIVE_TEXT,
-                          }}
-                        >
-                          <SubIcon
-                            className="h-3.5 w-3.5"
+                      >
+                        <div className="flex items-center gap-3">
+                          <BarChart3
+                            className="h-[18px] w-[18px]"
                             style={{
-                              color: isSubActive ? ACTIVE_TEXT : INACTIVE_ICON,
+                              color: isAnalyticsActive ? ACTIVE_BG : INACTIVE_ICON,
                             }}
                           />
-                          <span>{sub.title}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
+                          <span className="font-semibold">Analytics</span>
+                        </div>
+                        {analyticsOpen ? (
+                          <ChevronDown className="h-4 w-4 text-slate-400" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-slate-400" />
+                        )}
+                      </button>
+                    </SidebarMenuItem>
+
+                    {analyticsOpen && (
+                      <div className="pl-6 space-y-1 my-1 border-l-2 border-slate-100 ml-5">
+                        {analyticsSubItems.map((sub) => {
+                          const isSubActive = pathname === sub.url;
+                          const SubIcon = sub.icon;
+
+                          return (
+                            <Link
+                              key={sub.title}
+                              href={sub.url}
+                              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                              style={{
+                                backgroundColor: isSubActive ? ACTIVE_BG : "transparent",
+                                color: isSubActive ? ACTIVE_TEXT : INACTIVE_TEXT,
+                              }}
+                            >
+                              <SubIcon
+                                className="h-3.5 w-3.5"
+                                style={{
+                                  color: isSubActive ? ACTIVE_TEXT : INACTIVE_ICON,
+                                }}
+                              />
+                              <span>{sub.title}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {/* Bottom Admin Items (Reports & Settings) */}
-                {bottomAdminItems.map((item) => {
-                  const isActive = pathname === item.url;
-                  const Icon = item.icon;
+                {/* Bottom Admin Items (Admin Only) */}
+                {isAdminRole &&
+                  bottomAdminItems.map((item) => {
+                    const isActive = pathname === item.url;
+                    const Icon = item.icon;
 
-                  return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton
-                        asChild
-                        tooltip={item.title}
-                        className="rounded-xl font-semibold transition-colors duration-150"
-                        style={{
-                          backgroundColor: isActive ? ACTIVE_BG : "transparent",
-                          color: isActive ? ACTIVE_TEXT : INACTIVE_TEXT,
-                        }}
-                      >
-                        <Link
-                          href={item.url}
-                          className="flex items-center gap-3 px-4 py-[18px]"
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={item.title}
+                          className="rounded-xl font-semibold transition-colors duration-150"
+                          style={{
+                            backgroundColor: isActive ? ACTIVE_BG : "transparent",
+                            color: isActive ? ACTIVE_TEXT : INACTIVE_TEXT,
+                          }}
                         >
-                          <Icon
-                            className="h-[18px] w-[18px]"
-                            style={{
-                              color: isActive ? ACTIVE_TEXT : INACTIVE_ICON,
-                            }}
-                          />
-                          <span className="text-[14px] font-[500]">
-                            {item.title}
-                          </span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
+                          <Link
+                            href={item.url}
+                            className="flex items-center gap-3 px-4 py-[18px]"
+                          >
+                            <Icon
+                              className="h-[18px] w-[18px]"
+                              style={{
+                                color: isActive ? ACTIVE_TEXT : INACTIVE_ICON,
+                              }}
+                            />
+                            <span className="text-[14px] font-[500]">
+                              {item.title}
+                            </span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -341,4 +408,5 @@ export function AppSidebar({ isAdmin = false }: { isAdmin?: boolean }) {
     </Sidebar>
   );
 }
+
 
