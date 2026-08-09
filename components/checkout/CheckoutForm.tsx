@@ -8,8 +8,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useGetCartQuery, cartApi } from '@/services/cartApi';
 import { useGetMeQuery } from '@/services/authApi';
 import { usePlaceOrderMutation, useGetCheckoutSummaryQuery, checkoutApi } from '@/services/checkoutApi';
-import { useAppSelector, useAppDispatch } from '@/redux/hooks';
-import { selectCurrentUser, selectIsAuthenticated } from '@/features/auth/authSlice';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import { selectCurrentUser, selectIsAuthenticated, selectIsReseller } from '@/features/auth/authSlice';
+
 import { PaymentMethod, CheckoutRequest } from '@/types/checkout';
 import { ShippingZone } from '@/types/shipping';
 import { Coupon } from '@/types/coupon';
@@ -25,6 +26,7 @@ import { User as UserIcon, Mail, Phone as PhoneIcon, UserCheck, ShieldCheck } fr
 import Swal from 'sweetalert2';
 
 import { isValidBDMobileNumber, normalizeBDMobileNumber } from '@/utils/phoneValidation';
+
 
 const bdPhoneSchema = z
   .string()
@@ -175,11 +177,14 @@ export const CheckoutForm: React.FC = () => {
     ]
     : cart?.items || [];
 
+  const isReseller = useAppSelector(selectIsReseller);
+
   // Totals calculations - reactive single source of truth for shipping fee & grand total
   const calculatedSubtotal = checkoutItems.reduce((sum, item) => {
-    const price = item.unitPrice ?? item.price ?? (item.product ? getProductDisplayPrice(item.product) : 0);
+    const price = item.unitPrice ?? item.price ?? (item.product ? getProductDisplayPrice(item.product, isReseller) : 0);
     return sum + price * item.quantity;
   }, 0);
+
 
   const subtotal = checkoutSummary?.subtotal ?? calculatedSubtotal;
   const categoryDiscount = checkoutSummary?.discount ?? cart?.summary?.discount ?? 0;
@@ -408,11 +413,10 @@ export const CheckoutForm: React.FC = () => {
                 type="text"
                 placeholder="Full Name"
                 {...register('customerName')}
-                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
-                  errors.customerName
+                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${errors.customerName
                     ? 'border-rose-500 focus:ring-rose-500/20'
                     : 'border-slate-200 dark:border-slate-800 focus:border-emerald-600 focus:ring-emerald-500/20'
-                }`}
+                  }`}
               />
               {errors.customerName && (
                 <span className="text-[11px] text-rose-500 font-semibold">{errors.customerName.message}</span>
@@ -428,11 +432,10 @@ export const CheckoutForm: React.FC = () => {
                 type="tel"
                 placeholder="01XXXXXXXXX"
                 {...register('customerPhone')}
-                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
-                  errors.customerPhone
+                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${errors.customerPhone
                     ? 'border-rose-500 focus:ring-rose-500/20'
                     : 'border-slate-200 dark:border-slate-800 focus:border-emerald-600 focus:ring-emerald-500/20'
-                }`}
+                  }`}
               />
               {errors.customerPhone && (
                 <span className="text-[11px] text-rose-500 font-semibold">{errors.customerPhone.message}</span>
@@ -448,11 +451,10 @@ export const CheckoutForm: React.FC = () => {
                 type="email"
                 placeholder="example@domain.com"
                 {...register('customerEmail')}
-                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${
-                  errors.customerEmail
+                className={`h-11 px-4 rounded-xl border text-sm font-medium bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white focus:outline-none focus:ring-2 transition-all ${errors.customerEmail
                     ? 'border-rose-500 focus:ring-rose-500/20'
                     : 'border-slate-200 dark:border-slate-800 focus:border-emerald-600 focus:ring-emerald-500/20'
-                }`}
+                  }`}
               />
               {errors.customerEmail && (
                 <span className="text-[11px] text-rose-500 font-semibold">{errors.customerEmail.message}</span>
