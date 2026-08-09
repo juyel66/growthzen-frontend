@@ -163,13 +163,17 @@ export const OrderTable: React.FC<OrderTableProps> = ({
                         <span className="font-bold text-slate-900 dark:text-slate-100">
                           {item.customerName || item.guestName || "Guest User"}
                         </span>
-                        {isGuest ? (
-                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-amber-50 text-amber-700 border border-amber-200">
+                        {(item.orderedByRole === "RESELLER" || (item as any).orderRole === "RESELLER") ? (
+                          <span className="px-1.5 py-0.5 text-[9px] font-extrabold uppercase rounded bg-purple-100 text-purple-800 border border-purple-300 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800">
+                            RESELLER
+                          </span>
+                        ) : isGuest ? (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-amber-50 text-amber-700 border border-amber-200">
                             Guest
                           </span>
                         ) : (
-                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200">
-                            User
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-blue-50 text-blue-700 border border-blue-200">
+                            Customer
                           </span>
                         )}
                       </div>
