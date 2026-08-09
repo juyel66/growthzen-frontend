@@ -6,7 +6,7 @@ import { updateToken, setUser, setInitialized, logOut } from '@/features/auth/au
 import { useLazyGetMeQuery } from '@/services/authApi';
 import { getAccessToken } from '@/lib/tokenStorage';
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://growthzen-it-backend.onrender.com/api';
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000//api';
 
 export const AuthInitializer: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useAppDispatch();
