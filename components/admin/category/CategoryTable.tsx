@@ -180,7 +180,7 @@ export const CategoryTable: React.FC<CategoryTableProps> = ({
 
                   {/* Created Date */}
                   <td className="py-4 px-4 text-slate-500 font-medium">
-                    {new Date(cat.createdAt).toLocaleDateString()}
+                    {cat.createdAt ? new Date(cat.createdAt).toLocaleDateString() : 'N/A'}
                   </td>
 
                   {/* Actions */}
