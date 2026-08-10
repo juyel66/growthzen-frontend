@@ -127,7 +127,7 @@ export const settingsApi = baseApi.injectEndpoints({
       providesTags: (_result, _error, id) => [{ type: 'Banners', id }],
     }),
 
-    createBanner: builder.mutation<BannerItem, CreateBannerInput>({
+    createBanner: builder.mutation<BannerItem, CreateBannerInput | FormData>({
       query: (body) => ({
         url: '/settings/banners',
         method: 'POST',
@@ -136,7 +136,7 @@ export const settingsApi = baseApi.injectEndpoints({
       invalidatesTags: [{ type: 'Banners', id: 'LIST' }],
     }),
 
-    updateBanner: builder.mutation<BannerItem, { id: string; data: UpdateBannerInput }>({
+    updateBanner: builder.mutation<BannerItem, { id: string; data: UpdateBannerInput | FormData }>({
       query: ({ id, data }) => ({
         url: `/settings/banners/${id}`,
         method: 'PATCH',
@@ -151,7 +151,7 @@ export const settingsApi = baseApi.injectEndpoints({
         const patchResult = dispatch(
           settingsApi.util.updateQueryData('getBanners', undefined, (draft) => {
             const index = draft.findIndex((b) => b.id === id);
-            if (index !== -1) {
+            if (index !== -1 && !(data instanceof FormData)) {
               draft[index] = { ...draft[index], ...data };
             }
           })
