@@ -566,7 +566,15 @@ export default function OrderDetailsPage() {
 
             <div className="flex justify-between">
               <span className="text-slate-500">Shipping Delivery Charge:</span>
-              <span className="font-bold">{formatCurrency(order.deliveryCharge)}</span>
+              <span className="font-bold">
+                {order.deliveryCharge === 0 ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 uppercase font-extrabold">
+                    FREE
+                  </span>
+                ) : (
+                  formatCurrency(order.deliveryCharge)
+                )}
+              </span>
             </div>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between text-sm">
