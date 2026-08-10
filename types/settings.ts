@@ -45,12 +45,29 @@ export interface SystemFeatures {
   [key: string]: any;
 }
 
+export interface DeliverySettings {
+  deliveryEnabled?: boolean;
+  freeDeliveryEnabled?: boolean;
+  insideDhakaDeliveryCharge?: number;
+  outsideDhakaDeliveryCharge?: number;
+  freeShippingMinOrderAmount?: number;
+  estimatedDeliveryDays?: number;
+  [key: string]: any;
+}
+
 export interface Settings {
   id?: string;
   general?: GeneralSettings;
   theme?: ThemeSettings;
   payment?: PaymentSettings;
   features?: SystemFeatures;
+  delivery?: DeliverySettings;
+  insideDhakaDeliveryCharge?: number;
+  outsideDhakaDeliveryCharge?: number;
+  freeShippingMinOrderAmount?: number;
+  estimatedDeliveryDays?: number;
+  deliveryEnabled?: boolean;
+  freeDeliveryEnabled?: boolean;
   smtp?: Record<string, any>;
   updatedAt?: string;
   [key: string]: any;
