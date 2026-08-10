@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Container from '@/components/navbar/Container';
 import { useGetSettingsQuery } from '@/services/settingsApi';
 import { useAppSelector } from '@/redux/hooks';
-import { selectIsAuthenticated, selectIsReseller, selectCurrentUser } from '@/features/auth/authSlice';
+import { selectIsAuthenticated, selectIsReseller } from '@/features/auth/authSlice';
 import {
   Phone,
   Mail,
@@ -23,10 +23,8 @@ export const StorefrontFooter: React.FC = () => {
   const { data: settings } = useGetSettingsQuery();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const isReseller = useAppSelector(selectIsReseller);
-  const currentUser = useAppSelector(selectCurrentUser);
 
   const general = settings?.general;
-  const payment = settings?.payment;
 
   const storeName = general?.storeName || general?.siteName || 'GrowthZen Trends';
   const supportPhone = general?.supportPhone || '+880 1700-000000';
@@ -34,6 +32,9 @@ export const StorefrontFooter: React.FC = () => {
   const businessAddress = general?.businessAddress || 'Dhaka, Bangladesh';
 
   const currentYear = new Date().getFullYear();
+
+  const ordersHref = isAuthenticated ? '/order/my-orders' : '/auth/login?redirect=/order/my-orders';
+  const invoicesHref = isAuthenticated ? '/invoice/my-invoices' : '/auth/login?redirect=/invoice/my-invoices';
 
   return (
     <footer className="w-full bg-slate-900 text-slate-300 font-sans border-t border-slate-800 pt-12 pb-6">
@@ -45,8 +46,8 @@ export const StorefrontFooter: React.FC = () => {
               <Truck className="w-6 h-6" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Reliable Shipping</h4>
-              <p className="text-xs text-slate-400">Fast nationwide order delivery</p>
+              <h4 className="text-sm font-bold text-white">Reliable Delivery</h4>
+              <p className="text-xs text-slate-400">Fast nationwide courier shipping</p>
             </div>
           </div>
 
@@ -56,7 +57,7 @@ export const StorefrontFooter: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold text-white">Role-Based Pricing</h4>
-              <p className="text-xs text-slate-400">Verified customer & reseller rates</p>
+              <p className="text-xs text-slate-400">Verified retail & reseller pricing</p>
             </div>
           </div>
 
@@ -66,7 +67,7 @@ export const StorefrontFooter: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold text-white">Easy Returns</h4>
-              <p className="text-xs text-slate-400">Hassle-free defective replacements</p>
+              <p className="text-xs text-slate-400">Hassle-free replacement policy</p>
             </div>
           </div>
 
@@ -76,13 +77,13 @@ export const StorefrontFooter: React.FC = () => {
             </div>
             <div>
               <h4 className="text-sm font-bold text-white">Cash & Online Pay</h4>
-              <p className="text-xs text-slate-400">COD & secure checkout methods</p>
+              <p className="text-xs text-slate-400">COD & encrypted checkout</p>
             </div>
           </div>
         </div>
 
-        {/* 4-Column Main Footer Links Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-10">
+        {/* 5-Column Main Footer Links Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8">
           {/* Column 1: Brand & Contact Info */}
           <div className="lg:col-span-4 flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-2 text-xl font-black text-white tracking-tight">
@@ -93,7 +94,7 @@ export const StorefrontFooter: React.FC = () => {
             </Link>
 
             <p className="text-xs text-slate-400 leading-relaxed">
-              Quality products, competitive prices, and a convenient shopping experience for retail customers and wholesale resellers.
+              GrowthZen Trends is your premier online destination for curated fashion, lifestyle, electronics, beauty, and everyday essentials with dedicated retail and wholesale reseller support.
             </p>
 
             <div className="flex flex-col gap-2.5 pt-2 text-xs">
@@ -116,25 +117,20 @@ export const StorefrontFooter: React.FC = () => {
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
-          <div className="lg:col-span-3 flex flex-col gap-4">
+          {/* Column 2: SHOP */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-white border-l-2 border-emerald-500 pl-3">
-              Quick Links
+              Shop
             </h3>
-            <ul className="flex flex-col gap-2.5 text-xs font-medium">
-              <li>
-                <Link href="/" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <ChevronRight className="w-3 h-3 text-slate-500" /> Home
-                </Link>
-              </li>
+            <ul className="flex flex-col gap-2 text-xs font-medium">
               <li>
                 <Link href="/shop" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <ChevronRight className="w-3 h-3 text-slate-500" /> Shop Catalog
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Shop All
                 </Link>
               </li>
               <li>
-                <Link href="/categories" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <ChevronRight className="w-3 h-3 text-slate-500" /> All Categories
+                <Link href="/shop?sort=newest" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> New Arrivals
                 </Link>
               </li>
               <li>
@@ -148,98 +144,102 @@ export const StorefrontFooter: React.FC = () => {
                 </Link>
               </li>
               <li>
+                <Link href="/categories" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> All Categories
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?category=fashion" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Fashion
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?category=electronics" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Electronics
+                </Link>
+              </li>
+              <li>
+                <Link href="/shop?category=beauty" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Beauty & Care
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 3: CUSTOMER SERVICE */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-white border-l-2 border-emerald-500 pl-3">
+              Customer Care
+            </h3>
+            <ul className="flex flex-col gap-2 text-xs font-medium">
+              <li>
+                <Link href="/contact" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Contact Us
+                </Link>
+              </li>
+              <li>
+                <Link href={ordersHref} className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> My Orders
+                </Link>
+              </li>
+              <li>
+                <Link href={invoicesHref} className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> My Invoices
+                </Link>
+              </li>
+              <li>
+                <Link href="/shipping-policy" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Shipping & Delivery
+                </Link>
+              </li>
+              <li>
+                <Link href="/refund-policy" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Returns & Refunds
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> FAQs
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Column 4: ABOUT GROWTHZEN */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            <h3 className="text-sm font-extrabold uppercase tracking-wider text-white border-l-2 border-emerald-500 pl-3">
+              About GrowthZen
+            </h3>
+            <ul className="flex flex-col gap-2 text-xs font-medium">
+              <li>
                 <Link href="/about" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                   <ChevronRight className="w-3 h-3 text-slate-500" /> About Us
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                  <ChevronRight className="w-3 h-3 text-slate-500" /> Contact Support
+                <Link href="/about#why-choose-us" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Why GrowthZen
+                </Link>
+              </li>
+              <li>
+                <Link href="/reseller-program" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-emerald-400 font-bold">
+                  <Sparkles className="w-3 h-3" /> Reseller Program
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Careers
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Customer & Account Services */}
-          <div className="lg:col-span-3 flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold uppercase tracking-wider text-white border-l-2 border-emerald-500 pl-3">
-              Customer Services
-            </h3>
-            <ul className="flex flex-col gap-2.5 text-xs font-medium">
-              {isAuthenticated ? (
-                <>
-                  {isReseller ? (
-                    <li>
-                      <Link href="/account/reseller-dashboard" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5 text-emerald-400 font-bold">
-                        <Sparkles className="w-3 h-3" /> Reseller Dashboard
-                      </Link>
-                    </li>
-                  ) : (
-                    <li>
-                      <Link href="/account/profile" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                        <ChevronRight className="w-3 h-3 text-slate-500" /> My Profile
-                      </Link>
-                    </li>
-                  )}
-                  <li>
-                    <Link href="/order/my-orders" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> My Orders
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/invoice/my-invoices" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> My Invoices
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/wishlist" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> Saved Wishlist
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/cart" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> Shopping Cart
-                    </Link>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    <Link href="/auth/login" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> Customer Login
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/auth/register" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> Register Account
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/order/my-orders" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> Order Tracking
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/wishlist" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> My Wishlist
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/contact" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
-                      <ChevronRight className="w-3 h-3 text-slate-500" /> Help & Support
-                    </Link>
-                  </li>
-                </>
-              )}
-            </ul>
-          </div>
-
-          {/* Column 4: Legal & Policies */}
+          {/* Column 5: LEGAL & POLICIES */}
           <div className="lg:col-span-2 flex flex-col gap-4">
             <h3 className="text-sm font-extrabold uppercase tracking-wider text-white border-l-2 border-emerald-500 pl-3">
               Legal & Terms
             </h3>
-            <ul className="flex flex-col gap-2.5 text-xs font-medium">
+            <ul className="flex flex-col gap-2 text-xs font-medium">
               <li>
                 <Link href="/privacy-policy" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
                   <ChevronRight className="w-3 h-3 text-slate-500" /> Privacy Policy
@@ -260,11 +260,16 @@ export const StorefrontFooter: React.FC = () => {
                   <ChevronRight className="w-3 h-3 text-slate-500" /> Shipping Policy
                 </Link>
               </li>
+              <li>
+                <Link href="/privacy-policy#cookies" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <ChevronRight className="w-3 h-3 text-slate-500" /> Cookie Policy
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
 
-        {/* Accepted Payment Methods & Bottom Bar */}
+        {/* Accepted Payment Methods & Copyright Bottom Bar */}
         <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
           <div className="flex flex-wrap items-center gap-3">
             <span className="font-semibold text-slate-300">Accepted Payment Methods:</span>
@@ -281,7 +286,7 @@ export const StorefrontFooter: React.FC = () => {
             </div>
           </div>
 
-          <p className="text-center md:text-right">
+          <p className="text-center md:text-right font-medium">
             &copy; {currentYear} {storeName}. All rights reserved.
           </p>
         </div>
