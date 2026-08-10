@@ -266,9 +266,21 @@ export const SystemSettingsSection: React.FC = () => {
     );
   };
 
-  // Group top-level object blocks or render flat fields
+  const DELIVERY_KEYS = [
+    "deliveryEnabled",
+    "freeDeliveryEnabled",
+    "insideDhakaDeliveryCharge",
+    "outsideDhakaDeliveryCharge",
+    "insideDhakaCharge",
+    "outsideDhakaCharge",
+    "freeShippingMinOrderAmount",
+    "estimatedDeliveryDays",
+    "delivery",
+  ];
+
+  // Group top-level object blocks or render flat fields, excluding delivery keys
   const topKeys = Object.keys(formState).filter(
-    (k) => !["id", "createdAt", "updatedAt", "__v"].includes(k)
+    (k) => !["id", "createdAt", "updatedAt", "__v", ...DELIVERY_KEYS].includes(k)
   );
 
   return (
@@ -284,7 +296,7 @@ export const SystemSettingsSection: React.FC = () => {
             !Array.isArray(sectionVal)
           ) {
             const nestedKeys = Object.keys(sectionVal).filter(
-              (k) => !["id", "createdAt", "updatedAt"].includes(k)
+              (k) => !["id", "createdAt", "updatedAt", ...DELIVERY_KEYS].includes(k)
             );
 
             return (
