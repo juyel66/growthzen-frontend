@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { BannerItem, CreateBannerInput } from "@/types/settings";
 import { uploadMediaFile } from "@/services/uploadService";
+import { formatImageUrl } from "@/utils/imageUrl";
 import {
   X,
   UploadCloud,
@@ -35,7 +36,7 @@ type BannerFormData = z.infer<typeof bannerSchema>;
 interface CreateEditBannerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmitBanner: (data: CreateBannerInput) => Promise<void>;
+  onSubmitBanner: (data: CreateBannerInput | FormData) => Promise<void>;
   bannerToEdit?: BannerItem | null;
   isLoading?: boolean;
 }
@@ -47,6 +48,7 @@ export const CreateEditBannerModal: React.FC<CreateEditBannerModalProps> = ({
   bannerToEdit,
   isLoading = false,
 }) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<"form" | "preview">("form");
@@ -73,8 +75,13 @@ export const CreateEditBannerModal: React.FC<CreateEditBannerModalProps> = ({
   });
 
   const watchedValues = watch();
+  const formattedPreview = formatImageUrl(watchedValues.image);
+  const isLocalDevUrl =
+    formattedPreview.startsWith("http://localhost") ||
+    formattedPreview.startsWith("http://127.0.0.1");
 
   useEffect(() => {
+    setSelectedFile(null);
     if (bannerToEdit) {
       reset({
         title: bannerToEdit.title || "",
@@ -115,28 +122,34 @@ export const CreateEditBannerModal: React.FC<CreateEditBannerModalProps> = ({
       return;
     }
 
+    setSelectedFile(file);
+
     try {
       setIsUploading(true);
       setUploadProgress(10);
       const res = await uploadMediaFile(file, {
         onProgress: (percent) => setUploadProgress(percent),
       });
-      setValue("image", res.url, { shouldValidate: true });
+
+      if (res?.url && !res.url.startsWith("blob:")) {
+        setValue("image", res.url, { shouldValidate: true });
+      } else {
+        const localBlob = URL.createObjectURL(file);
+        setValue("image", localBlob, { shouldValidate: true });
+      }
+
       Swal.fire({
         icon: "success",
-        title: "Image Uploaded",
-        text: "Banner image uploaded successfully.",
+        title: "Image Selected",
+        text: "Banner image selected for submission.",
         toast: true,
         position: "top-end",
         showConfirmButton: false,
         timer: 2000,
       });
     } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Upload Failed",
-        text: err?.message || "Failed to upload image file.",
-      });
+      const localBlob = URL.createObjectURL(file);
+      setValue("image", localBlob, { shouldValidate: true });
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -144,7 +157,41 @@ export const CreateEditBannerModal: React.FC<CreateEditBannerModalProps> = ({
   };
 
   const onFormSubmit = async (data: BannerFormData) => {
-    await onSubmitBanner(data);
+    if (selectedFile) {
+      const formData = new FormData();
+      formData.append("image", selectedFile);
+      formData.append("title", data.title || "");
+      formData.append("subtitle", data.subtitle || "");
+      formData.append("description", data.description || "");
+      formData.append("buttonText", data.buttonText || "");
+      formData.append("buttonUrl", data.buttonUrl || "");
+      formData.append("displayOrder", String(data.displayOrder ?? 0));
+      formData.append("isActive", String(data.isActive));
+
+      await onSubmitBanner(formData);
+    } else {
+      if (data.image.startsWith("blob:")) {
+        Swal.fire({
+          icon: "error",
+          title: "Invalid Image URL",
+          text: "Temporary blob URLs cannot be saved to the database. Please select a valid file or enter a permanent URL.",
+        });
+        return;
+      }
+
+      const payload: CreateBannerInput = {
+        title: data.title,
+        subtitle: data.subtitle || "",
+        description: data.description || "",
+        image: data.image,
+        buttonText: data.buttonText || "",
+        buttonUrl: data.buttonUrl || "",
+        displayOrder: Number(data.displayOrder ?? 1),
+        isActive: Boolean(data.isActive),
+      };
+
+      await onSubmitBanner(payload);
+    }
   };
 
   return (
@@ -215,11 +262,12 @@ export const CreateEditBannerModal: React.FC<CreateEditBannerModalProps> = ({
               </div>
 
               <div className="relative rounded-2xl overflow-hidden min-h-[260px] bg-slate-900 text-white flex flex-col justify-end p-8 shadow-xl border border-slate-800">
-                {watchedValues.image ? (
+                {formattedPreview ? (
                   <Image
-                    src={watchedValues.image}
+                    src={formattedPreview}
                     alt={watchedValues.title || "Banner Preview"}
                     fill
+                    unoptimized={isLocalDevUrl}
                     className="object-cover opacity-60"
                   />
                 ) : (
@@ -293,11 +341,12 @@ export const CreateEditBannerModal: React.FC<CreateEditBannerModalProps> = ({
 
                   {/* Image Thumbnail Preview */}
                   <div className="relative rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center min-h-[100px]">
-                    {watchedValues.image ? (
+                    {formattedPreview ? (
                       <Image
-                        src={watchedValues.image}
+                        src={formattedPreview}
                         alt="Uploaded preview"
                         fill
+                        unoptimized={isLocalDevUrl}
                         className="object-cover"
                       />
                     ) : (
@@ -454,3 +503,4 @@ export const CreateEditBannerModal: React.FC<CreateEditBannerModalProps> = ({
   );
 };
 
+export default CreateEditBannerModal;
