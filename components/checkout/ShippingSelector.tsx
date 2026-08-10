@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { ShippingZone } from '@/types/shipping';
-import { Truck, Check, Clock } from 'lucide-react';
-import { useGetShippingQuery } from '@/services/shippingApi';
+import { Truck, Check, Clock, AlertTriangle, Sparkles } from 'lucide-react';
+import { useGetSettingsQuery } from '@/services/settingsApi';
 
 interface ShippingOption {
   zone: ShippingZone;
@@ -22,16 +22,46 @@ export const ShippingSelector: React.FC<ShippingSelectorProps> = ({
   selectedZone,
   onZoneChange,
 }) => {
-  const { data: shippingData } = useGetShippingQuery();
+  const { data: settingsData } = useGetSettingsQuery();
 
-  // Parse costs from backend API or standard defaults if custom endpoint data returned
-  let insideCost = 60;
-  let outsideCost = 120;
+  const data = (settingsData as any)?.data || settingsData;
+  const delivery = data?.delivery || {};
 
-  if (shippingData && typeof shippingData === 'object' && !Array.isArray(shippingData)) {
-    if (typeof shippingData.insideDhakaCost === 'number') insideCost = shippingData.insideDhakaCost;
-    if (typeof shippingData.outsideDhakaCost === 'number') outsideCost = shippingData.outsideDhakaCost;
-  }
+  const rawFreeDeliveryEnabled = data?.freeDeliveryEnabled ?? delivery.freeDeliveryEnabled;
+  const freeDeliveryEnabled =
+    rawFreeDeliveryEnabled !== undefined
+      ? Boolean(rawFreeDeliveryEnabled)
+      : data?.freeShippingMinOrderAmount === -1;
+
+  const rawDeliveryEnabled = data?.deliveryEnabled ?? delivery.deliveryEnabled;
+
+  // Free delivery means delivery service IS available.
+  // Delivery is only disabled if freeDeliveryEnabled is false AND rawDeliveryEnabled is explicitly false.
+  const deliveryEnabled =
+    freeDeliveryEnabled || (rawDeliveryEnabled !== undefined ? Boolean(rawDeliveryEnabled) : true);
+
+  const isDeliveryDisabled = !deliveryEnabled;
+  const isFreeDeliveryActive = deliveryEnabled && freeDeliveryEnabled;
+
+  const configuredInsideCost = Number(
+    data?.insideDhakaCharge ??
+    data?.insideDhakaDeliveryCharge ??
+    delivery.insideDhakaCharge ??
+    delivery.insideDhakaDeliveryCharge ??
+    60
+  );
+
+  const configuredOutsideCost = Number(
+    data?.outsideDhakaCharge ??
+    data?.outsideDhakaDeliveryCharge ??
+    delivery.outsideDhakaCharge ??
+    delivery.outsideDhakaDeliveryCharge ??
+    120
+  );
+
+  // When free delivery is active, cost = 0 for both options, but BOTH cards remain fully selectable!
+  const insideCost = isFreeDeliveryActive ? 0 : configuredInsideCost;
+  const outsideCost = isFreeDeliveryActive ? 0 : configuredOutsideCost;
 
   const shippingOptions: ShippingOption[] = [
     {
@@ -53,62 +83,81 @@ export const ShippingSelector: React.FC<ShippingSelectorProps> = ({
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
       <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
-        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Truck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-          Delivery Method & Location
-        </h2>
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+            Delivery Method & Location
+          </h2>
+          {isFreeDeliveryActive && (
+            <span className="ml-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60">
+              <Sparkles className="w-3 h-3" /> Free Delivery Active
+            </span>
+          )}
+        </div>
         <span className="text-xs text-slate-400 font-medium">Step 3 of 4</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {shippingOptions.map((option) => {
-          const isSelected = selectedZone === option.zone;
-          return (
-            <div
-              key={option.zone}
-              onClick={() => onZoneChange(option.zone, option.cost)}
-              className={`relative p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
-                isSelected
-                  ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-500/20 shadow-sm'
-                  : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex flex-col gap-1">
-                  <span className="font-extrabold text-sm text-slate-900 dark:text-white">
-                    {option.label}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                    {option.description}
-                  </span>
+      {isDeliveryDisabled ? (
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 text-rose-700 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>Delivery services are currently disabled by store administration.</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {shippingOptions.map((option) => {
+            const isSelected = selectedZone === option.zone;
+            return (
+              <div
+                key={option.zone}
+                onClick={() => onZoneChange(option.zone, option.cost)}
+                className={`relative p-5 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between gap-3 ${
+                  isSelected
+                    ? 'border-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/30 ring-2 ring-emerald-500/20 shadow-sm'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex flex-col gap-1">
+                    <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                      {option.label}
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      {option.description}
+                    </span>
+                  </div>
+                  <div
+                    className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+                      isSelected
+                        ? 'border-emerald-600 bg-emerald-600 text-white'
+                        : 'border-slate-300 dark:border-slate-700 bg-transparent'
+                    }`}
+                  >
+                    {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
                 </div>
-                <div
-                  className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
-                    isSelected
-                      ? 'border-emerald-600 bg-emerald-600 text-white'
-                      : 'border-slate-300 dark:border-slate-700 bg-transparent'
-                  }`}
-                >
-                  {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                </div>
-              </div>
 
-              <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80">
-                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  <span>{option.estimatedDays}</span>
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80">
+                  <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{option.estimatedDays}</span>
+                  </div>
+                  <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
+                    {isFreeDeliveryActive ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 uppercase font-black text-sm tracking-wide">
+                        FREE
+                      </span>
+                    ) : (
+                      `৳${option.cost.toFixed(2)}`
+                    )}
+                  </span>
                 </div>
-                <span className="text-base font-black text-emerald-600 dark:text-emerald-400">
-                  ${option.cost.toFixed(2)}
-                </span>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };
 
 export default ShippingSelector;
-
