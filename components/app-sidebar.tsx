@@ -135,7 +135,7 @@ const analyticsSubItems = [
 const bottomAdminItems = [
   {
     title: "Delivery Management",
-    url: "/admin-dashboard/settings?tab=delivery",
+    url: "/admin-dashboard/delivery-management",
     icon: Truck,
   },
   {
