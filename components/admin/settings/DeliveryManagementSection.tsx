@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Truck, ShieldCheck, DollarSign, Save, Loader2, AlertTriangle, CheckCircle, Package } from 'lucide-react';
-import { useGetSettingsQuery, usePatchSettingsMutation } from '@/services/settingsApi';
+import { useGetDeliverySettingsQuery, useUpdateDeliverySettingsMutation } from '@/services/settingsApi';
 import Swal from 'sweetalert2';
 
 export const DeliveryManagementSection: React.FC = () => {
-  const { data: settingsData, isLoading, isFetching, refetch } = useGetSettingsQuery();
-  const [patchSettings, { isLoading: isSaving }] = usePatchSettingsMutation();
+  const { data: settingsData, isLoading, refetch } = useGetDeliverySettingsQuery();
+  const [updateDeliverySettings, { isLoading: isSaving }] = useUpdateDeliverySettingsMutation();
 
   const [deliveryEnabled, setDeliveryEnabled] = useState<boolean>(true);
   const [freeDeliveryEnabled, setFreeDeliveryEnabled] = useState<boolean>(false);
@@ -18,28 +18,20 @@ export const DeliveryManagementSection: React.FC = () => {
   useEffect(() => {
     if (settingsData) {
       const data = (settingsData as any).data || settingsData;
-      const delivery = data.delivery || {};
-      const delEnabled = data.deliveryEnabled ?? delivery.deliveryEnabled ?? true;
-      const freeDelEnabled =
-        data.freeDeliveryEnabled ??
-        delivery.freeDeliveryEnabled ??
-        (data.freeShippingMinOrderAmount === -1);
+      const delEnabled = data.deliveryEnabled ?? true;
+      const freeDelEnabled = data.freeDeliveryEnabled ?? (data.freeShippingMinOrderAmount === -1);
 
       const insideCost =
         data.insideDhakaCharge ??
         data.insideDhakaDeliveryCharge ??
-        delivery.insideDhakaCharge ??
-        delivery.insideDhakaDeliveryCharge ??
         60;
 
       const outsideCost =
         data.outsideDhakaCharge ??
         data.outsideDhakaDeliveryCharge ??
-        delivery.outsideDhakaCharge ??
-        delivery.outsideDhakaDeliveryCharge ??
         120;
 
-      const days = data.estimatedDeliveryDays ?? delivery.estimatedDeliveryDays ?? 3;
+      const days = data.estimatedDeliveryDays ?? 3;
 
       setDeliveryEnabled(Boolean(delEnabled));
       setFreeDeliveryEnabled(Boolean(freeDelEnabled));
@@ -59,50 +51,28 @@ export const DeliveryManagementSection: React.FC = () => {
       outsideDhakaCharge: Number(outsideDhakaCharge),
       insideDhakaDeliveryCharge: Number(insideDhakaCharge),
       outsideDhakaDeliveryCharge: Number(outsideDhakaCharge),
-      freeShippingMinOrderAmount: freeDeliveryEnabled ? -1 : 0,
       estimatedDeliveryDays: Number(estimatedDays),
-      delivery: {
-        deliveryEnabled,
-        freeDeliveryEnabled,
-        insideDhakaCharge: Number(insideDhakaCharge),
-        outsideDhakaCharge: Number(outsideDhakaCharge),
-        insideDhakaDeliveryCharge: Number(insideDhakaCharge),
-        outsideDhakaDeliveryCharge: Number(outsideDhakaCharge),
-        estimatedDeliveryDays: Number(estimatedDays),
-      },
     };
 
     try {
-      const response = await patchSettings(payload).unwrap();
+      const response = await updateDeliverySettings(payload).unwrap();
       const updated = (response as any)?.data || response;
 
       if (updated && typeof updated === 'object') {
-        const del = updated.delivery || {};
-        const delEnabled = updated.deliveryEnabled ?? del.deliveryEnabled ?? deliveryEnabled;
-        const freeDelEnabled =
-          updated.freeDeliveryEnabled !== undefined
-            ? updated.freeDeliveryEnabled
-            : del.freeDeliveryEnabled !== undefined
-            ? del.freeDeliveryEnabled
-            : updated.freeShippingMinOrderAmount !== undefined
-            ? updated.freeShippingMinOrderAmount === -1
-            : freeDeliveryEnabled;
+        const delEnabled = updated.deliveryEnabled ?? deliveryEnabled;
+        const freeDelEnabled = updated.freeDeliveryEnabled ?? freeDeliveryEnabled;
 
         const insideCost =
           updated.insideDhakaCharge ??
           updated.insideDhakaDeliveryCharge ??
-          del.insideDhakaCharge ??
-          del.insideDhakaDeliveryCharge ??
           insideDhakaCharge;
 
         const outsideCost =
           updated.outsideDhakaCharge ??
           updated.outsideDhakaDeliveryCharge ??
-          del.outsideDhakaCharge ??
-          del.outsideDhakaDeliveryCharge ??
           outsideDhakaCharge;
 
-        const days = updated.estimatedDeliveryDays ?? del.estimatedDeliveryDays ?? estimatedDays;
+        const days = updated.estimatedDeliveryDays ?? estimatedDays;
 
         setDeliveryEnabled(Boolean(delEnabled));
         setFreeDeliveryEnabled(Boolean(freeDelEnabled));
