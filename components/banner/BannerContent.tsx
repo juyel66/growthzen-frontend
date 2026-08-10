@@ -7,11 +7,12 @@ import BannerButtons from './BannerButtons';
 
 interface BannerContentProps {
   title: string;
-  subtitle: string;
-  description: string;
-  buttonText: string;
-  buttonUrl: string;
+  subtitle?: string;
+  description?: string;
+  buttonText?: string;
+  buttonUrl?: string;
   badgeText?: string;
+  isFirstSlide?: boolean;
 }
 
 export const BannerContent: React.FC<BannerContentProps> = ({
@@ -21,6 +22,7 @@ export const BannerContent: React.FC<BannerContentProps> = ({
   buttonText,
   buttonUrl,
   badgeText,
+  isFirstSlide = false,
 }) => {
   const theme = useTheme();
 
@@ -47,6 +49,8 @@ export const BannerContent: React.FC<BannerContentProps> = ({
     },
   };
 
+  const badgeDisplay = badgeText || (subtitle && subtitle.length < 30 ? subtitle : undefined);
+
   return (
     <motion.div
       variants={containerVariants}
@@ -54,7 +58,7 @@ export const BannerContent: React.FC<BannerContentProps> = ({
       animate="visible"
       className="flex flex-col justify-center items-start space-y-4 max-w-xl text-left"
     >
-      {badgeText && (
+      {badgeDisplay && (
         <motion.span
           variants={itemVariants}
           className="text-[10px] sm:text-xs uppercase font-extrabold tracking-widest px-3.5 py-1 rounded-full select-none"
@@ -63,36 +67,49 @@ export const BannerContent: React.FC<BannerContentProps> = ({
             color: theme.primaryColor,
           }}
         >
-          {badgeText}
+          {badgeDisplay}
         </motion.span>
       )}
 
-      <motion.h2
-        variants={itemVariants}
-        className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-slate-900"
-      >
-        {title}
-      </motion.h2>
+      {isFirstSlide ? (
+        <motion.h1
+          variants={itemVariants}
+          className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-slate-900"
+        >
+          {title}
+        </motion.h1>
+      ) : (
+        <motion.h2
+          variants={itemVariants}
+          className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight text-slate-900"
+        >
+          {title}
+        </motion.h2>
+      )}
 
-      <motion.p
-        variants={itemVariants}
-        className="text-base sm:text-lg font-semibold"
-        style={{ color: theme.primaryColor }}
-      >
-        {subtitle}
-      </motion.p>
+      {subtitle && subtitle !== badgeDisplay && (
+        <motion.p
+          variants={itemVariants}
+          className="text-base sm:text-lg font-semibold"
+          style={{ color: theme.primaryColor }}
+        >
+          {subtitle}
+        </motion.p>
+      )}
 
-      <motion.p
-        variants={itemVariants}
-        className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-md"
-      >
-        {description}
-      </motion.p>
+      {description && (
+        <motion.p
+          variants={itemVariants}
+          className="text-xs sm:text-sm text-slate-500 leading-relaxed max-w-md"
+        >
+          {description}
+        </motion.p>
+      )}
 
       <motion.div variants={itemVariants} className="w-full">
         <BannerButtons
-          primaryText={buttonText}
-          primaryUrl={buttonUrl}
+          primaryText={buttonText || 'Shop Now'}
+          primaryUrl={buttonUrl || '/shop'}
           secondaryText="Explore Collection"
           secondaryUrl="/shop"
         />
