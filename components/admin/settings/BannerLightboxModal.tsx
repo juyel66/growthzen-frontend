@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { BannerItem } from "@/types/settings";
+import { formatImageUrl } from "@/utils/imageUrl";
 import { X, ExternalLink, Calendar, Hash, CheckCircle2, XCircle } from "lucide-react";
 
 interface BannerLightboxModalProps {
@@ -20,6 +21,7 @@ export const BannerLightboxModal: React.FC<BannerLightboxModalProps> = ({
 
   const isActive = banner.isActive !== false;
   const buttonUrl = banner.buttonUrl || banner.buttonLink || "#";
+  const imgUrl = formatImageUrl(banner.image);
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
@@ -46,11 +48,12 @@ export const BannerLightboxModal: React.FC<BannerLightboxModalProps> = ({
         <div className="p-6 space-y-6 overflow-y-auto">
           {/* Banner Hero Render */}
           <div className="relative rounded-3xl overflow-hidden min-h-[300px] bg-slate-950 text-white flex flex-col justify-end p-8 sm:p-12 shadow-2xl border border-slate-800">
-            {banner.image ? (
+            {imgUrl ? (
               <Image
-                src={banner.image}
+                src={imgUrl}
                 alt={banner.title}
                 fill
+                unoptimized={imgUrl.startsWith("http://localhost") || imgUrl.startsWith("http://127.0.0.1")}
                 className="object-cover opacity-70"
               />
             ) : (
