@@ -299,7 +299,9 @@ export const SharedInvoiceRenderer: React.FC<SharedInvoiceRendererProps> = ({
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Delivery Charge:</span>
-              <span className="font-semibold">{formatCurrency(deliveryCharge)}</span>
+              <span className="font-semibold text-emerald-600">
+                {deliveryCharge === 0 ? 'FREE' : formatCurrency(deliveryCharge)}
+              </span>
             </div>
             <div className="flex justify-between font-black text-sm text-slate-900 pt-2 border-t border-slate-300">
               <span>Grand Total:</span>
