@@ -48,6 +48,8 @@ export interface SystemFeatures {
 export interface DeliverySettings {
   deliveryEnabled?: boolean;
   freeDeliveryEnabled?: boolean;
+  insideDhakaCharge?: number;
+  outsideDhakaCharge?: number;
   insideDhakaDeliveryCharge?: number;
   outsideDhakaDeliveryCharge?: number;
   freeShippingMinOrderAmount?: number;
