@@ -22,6 +22,7 @@ import ShippingAddressForm from './ShippingAddressForm';
 import ShippingSelector from './ShippingSelector';
 import PaymentMethodSelector from './PaymentMethodSelector';
 import CheckoutSidebar from './CheckoutSidebar';
+import { useGetSettingsQuery } from '@/services/settingsApi';
 import { User as UserIcon, Mail, Phone as PhoneIcon, UserCheck, ShieldCheck } from 'lucide-react';
 import Swal from 'sweetalert2';
 
@@ -189,8 +190,56 @@ export const CheckoutForm: React.FC = () => {
   const subtotal = checkoutSummary?.subtotal ?? calculatedSubtotal;
   const categoryDiscount = checkoutSummary?.discount ?? cart?.summary?.discount ?? 0;
 
-  // Single source of truth for delivery charge: Inside Dhaka = 60, Outside Dhaka = 120
-  const shippingFee = activeZone === 'outside_dhaka' ? 120 : 60;
+  // Dynamic delivery charge calculation from backend settings API
+  const { data: settingsData } = useGetSettingsQuery();
+  const data = (settingsData as any)?.data || settingsData;
+  const delivery = data?.delivery || {};
+
+  const rawFreeDeliveryEnabled = data?.freeDeliveryEnabled ?? delivery.freeDeliveryEnabled;
+  const freeDeliveryEnabled =
+    rawFreeDeliveryEnabled !== undefined
+      ? Boolean(rawFreeDeliveryEnabled)
+      : data?.freeShippingMinOrderAmount === -1;
+
+  const rawDeliveryEnabled = data?.deliveryEnabled ?? delivery.deliveryEnabled;
+
+  // Free delivery means delivery service IS available.
+  // Delivery is only disabled if freeDeliveryEnabled is false AND rawDeliveryEnabled is explicitly false.
+  const deliveryEnabled =
+    freeDeliveryEnabled || (rawDeliveryEnabled !== undefined ? Boolean(rawDeliveryEnabled) : true);
+
+  const insideCost = Number(
+    data?.insideDhakaCharge ??
+    data?.insideDhakaDeliveryCharge ??
+    delivery.insideDhakaCharge ??
+    delivery.insideDhakaDeliveryCharge ??
+    60
+  );
+  const outsideCost = Number(
+    data?.outsideDhakaCharge ??
+    data?.outsideDhakaDeliveryCharge ??
+    delivery.outsideDhakaCharge ??
+    delivery.outsideDhakaDeliveryCharge ??
+    120
+  );
+
+  let shippingFee = 0;
+  let isFreeDelivery = false;
+
+  if (!deliveryEnabled) {
+    // Delivery disabled -> cost = 0, isFreeDelivery = false
+    shippingFee = 0;
+    isFreeDelivery = false;
+  } else if (freeDeliveryEnabled) {
+    // Delivery enabled + Free Delivery -> cost = 0, isFreeDelivery = true
+    shippingFee = 0;
+    isFreeDelivery = true;
+  } else {
+    // Delivery enabled + Normal Delivery -> cost = configured charge
+    shippingFee = activeZone === 'outside_dhaka' ? outsideCost : insideCost;
+    isFreeDelivery = false;
+  }
+
   const tax = cart?.summary?.tax ?? 0;
   const grandTotal = Math.max(0, subtotal - categoryDiscount - couponDiscount + shippingFee + tax);
 
@@ -496,6 +545,8 @@ export const CheckoutForm: React.FC = () => {
           tax={tax}
           grandTotal={grandTotal}
           isLoading={isSubmitting}
+          deliveryEnabled={deliveryEnabled}
+          isFreeDelivery={isFreeDelivery}
           onCouponApplied={handleCouponApplied}
           onCouponRemoved={handleCouponRemoved}
         />
