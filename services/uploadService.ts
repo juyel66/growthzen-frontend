@@ -20,9 +20,10 @@ export class DefaultUploadProvider implements IUploadProvider {
       throw new Error('Upload cancelled');
     }
 
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000//api';
-    const apiBase = rawApiUrl.replace(/\/+৳/, '');
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const apiBase = rawApiUrl.replace(/\/+$/, '');
     const endpoints = [
+      `${apiBase}/settings/banners/upload`,
       `${apiBase}/upload`,
       `${apiBase}/upload/image`,
       `${apiBase}/products/upload`,
@@ -79,6 +80,21 @@ export class DefaultUploadProvider implements IUploadProvider {
           xhr.ontimeout = () => reject(new Error('Upload request timed out'));
 
           xhr.open('POST', endpoint, true);
+
+          // Attach token if present in localStorage or cookies
+          if (typeof window !== 'undefined') {
+            const token =
+              localStorage.getItem('token') ||
+              localStorage.getItem('accessToken') ||
+              document.cookie
+                .split('; ')
+                .find((row) => row.startsWith('token='))
+                ?.split('=')[1];
+            if (token) {
+              xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+            }
+          }
+
           xhr.send(formData);
         });
 
