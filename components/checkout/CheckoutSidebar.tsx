@@ -18,6 +18,8 @@ interface CheckoutSidebarProps {
   tax?: number;
   grandTotal: number;
   isLoading: boolean;
+  deliveryEnabled?: boolean;
+  isFreeDelivery?: boolean;
   onCouponApplied: (coupon: Coupon, discountAmount: number) => void;
   onCouponRemoved: () => void;
 }
@@ -32,6 +34,8 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
   tax = 0,
   grandTotal,
   isLoading,
+  deliveryEnabled = true,
+  isFreeDelivery = false,
   onCouponApplied,
   onCouponRemoved,
 }) => {
@@ -46,6 +50,8 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
         categoryDiscount={categoryDiscount}
         tax={tax}
         grandTotal={grandTotal}
+        deliveryEnabled={deliveryEnabled}
+        isFreeDelivery={isFreeDelivery}
       />
 
       {/* 2. Coupon Section */}
@@ -71,7 +77,7 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
       <div className="pt-2">
         <PlaceOrderButton
           isLoading={isLoading}
-          disabled={items.length === 0}
+          disabled={items.length === 0 || !deliveryEnabled}
           grandTotal={grandTotal}
         />
       </div>
@@ -80,4 +86,3 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
 };
 
 export default CheckoutSidebar;
-
