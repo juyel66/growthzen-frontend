@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { BannerItem } from "@/types/settings";
+import { formatImageUrl } from "@/utils/imageUrl";
 import { Eye, Edit3, Trash2, Link as LinkIcon, Layers } from "lucide-react";
 
 interface BannerCardListProps {
@@ -34,6 +35,7 @@ export const BannerCardList: React.FC<BannerCardListProps> = ({
         const isActive = item.isActive !== false;
         const isDeleting = isDeletingId === item.id;
         const buttonUrl = item.buttonUrl || item.buttonLink || "#";
+        const imgUrl = formatImageUrl(item.image);
 
         return (
           <div
@@ -42,11 +44,12 @@ export const BannerCardList: React.FC<BannerCardListProps> = ({
           >
             {/* Banner Image Preview */}
             <div className="relative h-44 w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-              {item.image ? (
+              {imgUrl ? (
                 <Image
-                  src={item.image}
+                  src={imgUrl}
                   alt={item.title}
                   fill
+                  unoptimized={imgUrl.startsWith("http://localhost") || imgUrl.startsWith("http://127.0.0.1")}
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
