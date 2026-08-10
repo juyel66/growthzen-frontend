@@ -1,6 +1,7 @@
 import { baseApi } from './baseApi';
 import {
   Settings,
+  DeliverySettings,
   BannerItem,
   CreateBannerInput,
   UpdateBannerInput,
@@ -58,6 +59,33 @@ export const settingsApi = baseApi.injectEndpoints({
       query: (body) => ({
         url: '/settings',
         method: 'PUT',
+        body,
+      }),
+      transformResponse: (response: any) => {
+        if (!response) return {};
+        if (response.data) return response.data;
+        return response;
+      },
+      invalidatesTags: ['Settings'],
+    }),
+
+    // ----------------------------------------------------
+    // CENTRALIZED DELIVERY SETTINGS ENDPOINTS
+    // ----------------------------------------------------
+    getDeliverySettings: builder.query<any, void>({
+      query: () => '/settings/delivery',
+      transformResponse: (response: any) => {
+        if (!response) return {};
+        if (response.data) return response.data;
+        return response;
+      },
+      providesTags: ['Settings'],
+    }),
+
+    updateDeliverySettings: builder.mutation<any, Record<string, any>>({
+      query: (body) => ({
+        url: '/settings/delivery',
+        method: 'PATCH',
         body,
       }),
       transformResponse: (response: any) => {
@@ -213,6 +241,7 @@ export const settingsApi = baseApi.injectEndpoints({
         }
       },
     }),
+
   }),
   overrideExisting: false,
 });
@@ -221,6 +250,8 @@ export const {
   useGetSettingsQuery,
   usePatchSettingsMutation,
   useUpdateSettingsMutation,
+  useGetDeliverySettingsQuery,
+  useUpdateDeliverySettingsMutation,
   useGetBannersQuery,
   useGetBannerByIdQuery,
   useCreateBannerMutation,
