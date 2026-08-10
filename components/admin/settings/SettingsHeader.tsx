@@ -1,9 +1,9 @@
 "use client";
 
 import React from "react";
-import { Settings, Image as ImageIcon, Percent, RefreshCw, Truck } from "lucide-react";
+import { Settings, Image as ImageIcon, Percent, RefreshCw } from "lucide-react";
 
-export type SettingsTab = "banners" | "system" | "category-discounts" | "delivery";
+export type SettingsTab = "banners" | "system" | "category-discounts";
 
 interface SettingsHeaderProps {
   activeTab: SettingsTab;
@@ -36,7 +36,7 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({
             </h1>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 pl-11">
-            Manage global store configurations, homepage banners, category discounts, and delivery charges.
+            Manage global store configurations, homepage banners, and category discounts.
           </p>
         </div>
 
@@ -69,18 +69,6 @@ export const SettingsHeader: React.FC<SettingsHeaderProps> = ({
               {bannerCount}
             </span>
           )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab("delivery")}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all cursor-pointer whitespace-nowrap ${
-            activeTab === "delivery"
-              ? "border-emerald-600 text-emerald-600 dark:text-emerald-400"
-              : "border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-          }`}
-        >
-          <Truck className="w-4 h-4" />
-          <span>Delivery Management</span>
         </button>
 
         <button
