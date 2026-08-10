@@ -76,14 +76,15 @@ export const BannerManagementSection: React.FC = () => {
     return list;
   }, [bannersList, searchTerm, sortOrder]);
 
-  const handleCreateSubmit = async (data: CreateBannerInput) => {
+  const handleCreateSubmit = async (data: any) => {
     try {
+      const bannerTitle = data instanceof FormData ? data.get("title")?.toString() || "Banner" : data.title || "Banner";
       if (editingBanner) {
         await updateBannerMutation({ id: editingBanner.id, data }).unwrap();
         Swal.fire({
           icon: "success",
           title: "Banner Updated",
-          text: `Banner "${data.title}" updated successfully.`,
+          text: `Banner "${bannerTitle}" updated successfully.`,
           toast: true,
           position: "top-end",
           showConfirmButton: false,
@@ -94,7 +95,7 @@ export const BannerManagementSection: React.FC = () => {
         Swal.fire({
           icon: "success",
           title: "Banner Created",
-          text: `Banner "${data.title}" added to homepage carousel.`,
+          text: `Banner "${bannerTitle}" added to homepage carousel.`,
           toast: true,
           position: "top-end",
           showConfirmButton: false,
