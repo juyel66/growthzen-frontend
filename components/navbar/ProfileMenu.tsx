@@ -95,13 +95,6 @@ export const ProfileMenu = () => {
                   <LayoutDashboard className="w-4 h-4 text-slate-400" />
                   <span>Dashboard</span>
                 </Link>
-                <Link
-                  href="/auth/change-password"
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                >
-                  <KeyRound className="w-4 h-4 text-slate-400" />
-                  <span>Change Password</span>
-                </Link>
                 <hr className="my-1 border-slate-100 dark:border-slate-800" />
                 <button
                   onClick={handleLogout}
