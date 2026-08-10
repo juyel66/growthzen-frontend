@@ -15,6 +15,8 @@ interface OrderSummaryProps {
   categoryDiscount?: number;
   tax?: number;
   grandTotal: number;
+  deliveryEnabled?: boolean;
+  isFreeDelivery?: boolean;
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -25,6 +27,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   categoryDiscount = 0,
   tax = 0,
   grandTotal,
+  deliveryEnabled = true,
+  isFreeDelivery = false,
 }) => {
   const totalDiscount = couponDiscount + categoryDiscount;
 
@@ -125,7 +129,11 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             <Truck className="w-3.5 h-3.5" /> Delivery charge
           </span>
           <span className="font-bold text-slate-900 dark:text-white">
-            {shippingFee === 0 ? (
+            {deliveryEnabled === false ? (
+              <span className="text-rose-500 font-bold text-[11px]">
+                Unavailable
+              </span>
+            ) : isFreeDelivery || shippingFee === 0 ? (
               <span className="text-emerald-600 dark:text-emerald-400 uppercase font-extrabold text-[11px]">
                 Free
               </span>
@@ -168,4 +176,3 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
 };
 
 export default OrderSummary;
-
