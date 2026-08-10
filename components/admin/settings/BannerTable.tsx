@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { BannerItem } from "@/types/settings";
+import { formatImageUrl } from "@/utils/imageUrl";
 import { Eye, Edit3, Trash2, Link as LinkIcon, Layers } from "lucide-react";
 
 interface BannerTableProps {
@@ -52,6 +53,7 @@ export const BannerTable: React.FC<BannerTableProps> = ({
                 const isActive = item.isActive !== false;
                 const isDeleting = isDeletingId === item.id;
                 const buttonUrl = item.buttonUrl || item.buttonLink || "#";
+                const imgUrl = formatImageUrl(item.image);
 
                 return (
                   <tr
@@ -64,11 +66,12 @@ export const BannerTable: React.FC<BannerTableProps> = ({
                         onClick={() => onPreview(item)}
                         className="w-24 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden relative border border-slate-200 dark:border-slate-700 cursor-pointer group shadow-2xs"
                       >
-                        {item.image ? (
+                        {imgUrl ? (
                           <Image
-                            src={item.image}
+                            src={imgUrl}
                             alt={item.title || "Banner"}
                             fill
+                            unoptimized={imgUrl.startsWith("http://localhost") || imgUrl.startsWith("http://127.0.0.1")}
                             className="object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
