@@ -15,6 +15,11 @@ export const settingsApi = baseApi.injectEndpoints({
     // ----------------------------------------------------
     getSettings: builder.query<Settings, void>({
       query: () => '/settings',
+      transformResponse: (response: any) => {
+        if (!response) return {};
+        if (response.data) return response.data;
+        return response;
+      },
       providesTags: ['Settings'],
     }),
 
@@ -33,7 +38,15 @@ export const settingsApi = baseApi.injectEndpoints({
           })
         );
         try {
-          await queryFulfilled;
+          const { data } = await queryFulfilled;
+          const serverData = (data as any)?.data || data;
+          if (serverData && typeof serverData === 'object') {
+            dispatch(
+              settingsApi.util.updateQueryData('getSettings', undefined, (draft) => {
+                Object.assign(draft, serverData);
+              })
+            );
+          }
         } catch {
           patchResult.undo();
         }
@@ -47,6 +60,11 @@ export const settingsApi = baseApi.injectEndpoints({
         method: 'PUT',
         body,
       }),
+      transformResponse: (response: any) => {
+        if (!response) return {};
+        if (response.data) return response.data;
+        return response;
+      },
       invalidatesTags: ['Settings'],
     }),
 
