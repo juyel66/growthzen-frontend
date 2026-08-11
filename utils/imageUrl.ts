@@ -1,11 +1,11 @@
 /**
  * Formats image URLs by ensuring relative upload paths prepend the backend API origin.
  */
-export const formatImageUrl = (url: string | null | undefined): string => {
-  if (!url || typeof url !== 'string') return '';
+export const formatImageUrl = (url: string | null | undefined, fallbackSrc: string = '/placeholder-product.png'): string => {
+  if (!url || typeof url !== 'string') return fallbackSrc;
 
   const trimmed = url.trim();
-  if (!trimmed) return '';
+  if (!trimmed || trimmed === 'null' || trimmed === 'undefined') return fallbackSrc;
 
   // Return absolute or data URLs as-is
   if (
