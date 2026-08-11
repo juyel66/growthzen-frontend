@@ -4,7 +4,11 @@ import {
   ProductReviewsResponse,
   ReviewEligibilityResponse,
   CreateReviewInput,
+  PublicReviewInput,
+  VerifyReviewTokenResponse,
+  SubmitTokenReviewInput,
   UpdateReviewInput,
+  GetAllReviewsParams,
 } from '@/types/review';
 
 export const reviewApi = baseApi.injectEndpoints({
@@ -13,38 +17,39 @@ export const reviewApi = baseApi.injectEndpoints({
     getProductReviews: builder.query<ProductReviewsResponse, string>({
       query: (productId) => `/reviews/product/${productId}`,
       transformResponse: (response: any): ProductReviewsResponse => {
-        if (response && typeof response === 'object') {
-          const reviewsList = Array.isArray(response.reviews)
-            ? response.reviews
-            : Array.isArray(response.data)
-              ? response.data
-              : Array.isArray(response)
-                ? response
+        const payload = response?.data || response;
+        if (payload && typeof payload === 'object') {
+          const reviewsList = Array.isArray(payload.reviews)
+            ? payload.reviews
+            : Array.isArray(payload.data)
+              ? payload.data
+              : Array.isArray(payload)
+                ? payload
                 : [];
 
           const totalReviews =
-            typeof response.totalReviews === 'number'
-              ? response.totalReviews
-              : typeof response.total === 'number'
-                ? response.total
+            typeof payload.totalReviews === 'number'
+              ? payload.totalReviews
+              : typeof payload.total === 'number'
+                ? payload.total
                 : reviewsList.length;
 
           const averageRating =
-            typeof response.averageRating === 'number'
-              ? response.averageRating
-              : typeof response.ratingsAverage === 'number'
-                ? response.ratingsAverage
+            typeof payload.averageRating === 'number'
+              ? payload.averageRating
+              : typeof payload.ratingsAverage === 'number'
+                ? payload.ratingsAverage
                 : reviewsList.length > 0
                   ? reviewsList.reduce((acc: number, r: any) => acc + (r.rating || 0), 0) / reviewsList.length
                   : 0;
 
-          const dist = response.ratingDistribution || response.breakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+          const dist = payload.ratingBreakdown || payload.ratingDistribution || payload.breakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
           const ratingDistribution = {
-            5: dist[5] || 0,
-            4: dist[4] || 0,
-            3: dist[3] || 0,
-            2: dist[2] || 0,
-            1: dist[1] || 0,
+            5: dist[5] || payload.fiveStar || 0,
+            4: dist[4] || payload.fourStar || 0,
+            3: dist[3] || payload.threeStar || 0,
+            2: dist[2] || payload.twoStar || 0,
+            1: dist[1] || payload.oneStar || 0,
           };
 
           return {
@@ -107,7 +112,7 @@ export const reviewApi = baseApi.injectEndpoints({
     }),
 
     // 4. Get all reviews (Admin panel)
-    getAllReviews: builder.query<ReviewItem[], { status?: string; search?: string } | void>({
+    getAllReviews: builder.query<ReviewItem[], GetAllReviewsParams | void>({
       query: (params) => ({
         url: '/reviews',
         params: params || undefined,
@@ -128,7 +133,7 @@ export const reviewApi = baseApi.injectEndpoints({
           : [{ type: 'Reviews', id: 'LIST' }],
     }),
 
-    // 5. Submit a new review
+    // 5. Submit a verified order item review
     createReview: builder.mutation<ReviewItem, CreateReviewInput>({
       query: (body) => ({
         url: '/reviews',
@@ -138,7 +143,63 @@ export const reviewApi = baseApi.injectEndpoints({
       invalidatesTags: ['Reviews', 'Products'],
     }),
 
-    // 6. Update review (Admin status change or customer edit)
+    // 6. Submit a Public review (POST /reviews/public)
+    submitPublicReview: builder.mutation<{ message?: string; review?: ReviewItem }, PublicReviewInput>({
+      query: (body) => ({
+        url: '/reviews/public',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Reviews'],
+    }),
+
+    // 7. Verify secure email review token (GET /reviews/verify/:token)
+    verifyReviewToken: builder.query<VerifyReviewTokenResponse, string>({
+      query: (token) => `/reviews/verify/${token}`,
+      transformResponse: (response: any): VerifyReviewTokenResponse => {
+        if (response && typeof response === 'object') {
+          return {
+            valid: response.valid !== false && !response.error,
+            message: response.message,
+            productId: response.productId || response.product?.id,
+            productTitle: response.productTitle || response.productName || response.product?.title || response.product?.name,
+            productImage: response.productImage || response.productThumbnail || response.product?.thumbnailImage || response.product?.image,
+            product: response.product,
+            existingReview: response.existingReview || response.review || null,
+          };
+        }
+        return {
+          valid: false,
+          message: 'Review link unavailable or invalid.',
+        };
+      },
+    }),
+
+    // 8. Submit review via secure email token (POST /reviews/verify/:token)
+    submitTokenReview: builder.mutation<{ message?: string }, SubmitTokenReviewInput>({
+      query: ({ token, ...body }) => ({
+        url: `/reviews/verify/${token}`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Reviews', 'Products'],
+    }),
+
+    // 9. Admin assign product to review (PATCH /admin/reviews/:id or PATCH /reviews/:id)
+    adminAssignProduct: builder.mutation<ReviewItem, { id: string; productId?: string; productIds?: string[] }>({
+      query: ({ id, ...body }) => ({
+        url: `/admin/reviews/${id}`,
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Reviews', id },
+        'Reviews',
+        'Products',
+      ],
+    }),
+
+    // 10. Update review (Admin status change or customer edit)
     updateReview: builder.mutation<ReviewItem, { id: string; data: UpdateReviewInput }>({
       query: ({ id, data }) => ({
         url: `/reviews/${id}`,
@@ -157,9 +218,12 @@ export const reviewApi = baseApi.injectEndpoints({
             const item = draft.find((r) => r.id === id);
             if (item) {
               if (data.rating !== undefined) item.rating = data.rating;
+              if (data.title !== undefined) item.title = data.title;
               if (data.comment !== undefined) item.comment = data.comment;
               if (data.status !== undefined) item.status = data.status;
               if (data.images !== undefined) item.images = data.images;
+              if (data.productId !== undefined) item.productId = data.productId;
+              if (data.productIds !== undefined) item.productIds = data.productIds;
               item.updatedAt = new Date().toISOString();
             }
           })
@@ -172,7 +236,7 @@ export const reviewApi = baseApi.injectEndpoints({
       },
     }),
 
-    // 7. Delete review
+    // 11. Delete review
     deleteReview: builder.mutation<{ message: string }, string>({
       query: (id) => ({
         url: `/reviews/${id}`,
@@ -205,6 +269,11 @@ export const {
   useGetMyReviewsQuery,
   useGetAllReviewsQuery,
   useCreateReviewMutation,
+  useSubmitPublicReviewMutation,
+  useVerifyReviewTokenQuery,
+  useSubmitTokenReviewMutation,
+  useAdminAssignProductMutation,
   useUpdateReviewMutation,
   useDeleteReviewMutation,
 } = reviewApi;
+
