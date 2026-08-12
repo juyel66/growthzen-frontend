@@ -88,11 +88,6 @@ const mainAdminItems = [
     icon: MessageSquare,
   },
   {
-    title: "Shipping",
-    url: "/admin-dashboard/shipping",
-    icon: Truck,
-  },
-  {
     title: "Coupons",
     url: "/admin-dashboard/coupons",
     icon: Ticket,
