@@ -72,7 +72,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="w-full min-h-screen bg-slate-50/50 dark:bg-slate-950 py-8">
-      <title>Secure Checkout - GrowthZen Enterprise Store</title>
+      <title>Secure Checkout - GrowthZen Trends</title>
 
       <Container className="flex flex-col gap-6">
         {/* Breadcrumb Navigation */}
