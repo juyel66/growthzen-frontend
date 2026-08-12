@@ -200,7 +200,7 @@ export const KpiCardsSection: React.FC<KpiCardsSectionProps> = ({
       icon: Truck,
       color: "from-indigo-600 to-sky-600",
       accentBg: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
-      link: "/admin-dashboard/shipping",
+      link: "/admin-dashboard/delivery-management",
       breakdown: [
         { label: "Active", val: formatNumber(shipping?.activeShippingMethods) },
         {
