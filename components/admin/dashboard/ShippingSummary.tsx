@@ -27,10 +27,10 @@ export const ShippingSummary: React.FC<ShippingSummaryProps> = ({
         </div>
 
         <Link
-          href="/admin-dashboard/shipping"
+          href="/admin-dashboard/delivery-management"
           className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
         >
-          Manage Shipping
+          Delivery Settings
         </Link>
       </div>
 
