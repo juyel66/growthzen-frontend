@@ -18,7 +18,7 @@ export const SessionRestoreLoader: React.FC<SessionRestoreLoaderProps> = ({
         </div>
         <div className="flex flex-col items-center gap-1">
           <span className="text-base font-bold tracking-wide text-white">
-            GrowthZen Enterprise
+            GrowthZen Trends
           </span>
           <span className="text-xs font-medium text-emerald-400 animate-pulse">
             {message}
