@@ -71,7 +71,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all">
+    <div className="flex flex-col gap-4 bg-white p-6  dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-all">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Title & Date Details */}
         <div>
