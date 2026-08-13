@@ -121,61 +121,132 @@ export function formatImageUrl(url: string | null | undefined, fallback: string 
     return trimmed;
   }
 
-  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000//api';
-  const backendBase = rawApiUrl.replace(/\/api\/?৳/i, '').replace(/\/+৳/, '');
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+  const backendBase = rawApiUrl.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${backendBase}${cleanPath}`;
 }
 
 // Helper utility functions for safe fallback values
-export function getProductTitle(product: Product): string {
+export function getProductTitle(product: Product | any): string {
+  if (!product) return 'Untitled Product';
   return product.title || product.name || 'Untitled Product';
 }
 
-export function getProductCategoryName(product: Product): string {
-  if (!product.category) return 'General';
+export function getProductCategoryName(product: Product | any): string {
+  if (!product || !product.category) return 'General';
   if (typeof product.category === 'string') return product.category;
   return product.category.name || 'General';
 }
 
-export function getProductMainImage(product: Product, fallback: string = '/placeholder-product.png'): string {
-  if (!product) return fallback;
-  if (product.thumbnailImage && typeof product.thumbnailImage === 'string' && product.thumbnailImage.trim()) {
-    const formatted = formatImageUrl(product.thumbnailImage, fallback);
+function extractStringUrl(img: any): string | null {
+  if (!img) return null;
+  if (typeof img === 'string') {
+    const trimmed = img.trim();
+    if (trimmed && trimmed !== 'undefined' && trimmed !== 'null' && trimmed !== '[object Object]') {
+      return trimmed;
+    }
+    return null;
+  }
+  if (typeof img === 'object') {
+    const candidate =
+      img.url ||
+      img.path ||
+      img.src ||
+      img.imageUrl ||
+      img.image ||
+      img.secure_url ||
+      img.fileUrl ||
+      img.thumbnail ||
+      img.thumbnailImage;
+    if (candidate && typeof candidate === 'string') {
+      const trimmed = candidate.trim();
+      if (trimmed && trimmed !== 'undefined' && trimmed !== 'null' && trimmed !== '[object Object]') {
+        return trimmed;
+      }
+    }
+  }
+  return null;
+}
+
+export function getProductMainImage(itemOrProduct: any, fallback: string = '/placeholder-product.png'): string {
+  if (!itemOrProduct) return fallback;
+
+  if (typeof itemOrProduct === 'string') {
+    const formatted = formatImageUrl(itemOrProduct, fallback);
     if (formatted !== fallback) return formatted;
   }
-  if (Array.isArray(product.productImages) && product.productImages.length > 0) {
-    const valid = product.productImages.find((img) => img && typeof img === 'string' && img.trim() && img !== 'undefined' && img !== 'null');
-    if (valid) {
-      const formatted = formatImageUrl(valid, fallback);
+
+  const target = itemOrProduct.product || itemOrProduct;
+
+  const singleCandidates = [
+    target.thumbnailImage,
+    target.thumbnail,
+    target.image,
+    target.imageUrl,
+    target.featuredImage,
+    target.primaryImage,
+    target.productImage,
+    itemOrProduct.image,
+    itemOrProduct.productImage,
+    itemOrProduct.thumbnailImage,
+  ];
+
+  for (const candidate of singleCandidates) {
+    const urlStr = extractStringUrl(candidate);
+    if (urlStr) {
+      const formatted = formatImageUrl(urlStr, fallback);
       if (formatted !== fallback) return formatted;
     }
   }
-  if (Array.isArray(product.images) && product.images.length > 0) {
-    const valid = product.images.find((img) => img && typeof img === 'string' && img.trim() && img !== 'undefined' && img !== 'null');
-    if (valid) {
-      const formatted = formatImageUrl(valid, fallback);
-      if (formatted !== fallback) return formatted;
+
+  const arrayCandidates = [
+    target.productImages,
+    target.images,
+    itemOrProduct.images,
+    itemOrProduct.productImages,
+  ];
+
+  for (const arr of arrayCandidates) {
+    if (Array.isArray(arr) && arr.length > 0) {
+      const primary = arr.find((img) => img && typeof img === 'object' && (img.isPrimary || img.primary || img.isMain));
+      if (primary) {
+        const urlStr = extractStringUrl(primary);
+        if (urlStr) {
+          const formatted = formatImageUrl(urlStr, fallback);
+          if (formatted !== fallback) return formatted;
+        }
+      }
+
+      for (const img of arr) {
+        const urlStr = extractStringUrl(img);
+        if (urlStr) {
+          const formatted = formatImageUrl(urlStr, fallback);
+          if (formatted !== fallback) return formatted;
+        }
+      }
     }
   }
+
   return fallback;
 }
 
-export function getProductGalleryImages(product: Product, fallback: string = '/placeholder-product.png'): string[] {
+export function getProductGalleryImages(product: any, fallback: string = '/placeholder-product.png'): string[] {
   if (!product) return [fallback];
   const list: string[] = [];
 
-  if (product.thumbnailImage && typeof product.thumbnailImage === 'string' && product.thumbnailImage.trim()) {
-    const formatted = formatImageUrl(product.thumbnailImage, fallback);
-    if (formatted !== fallback) list.push(formatted);
-  }
+  const main = getProductMainImage(product, fallback);
+  if (main !== fallback) list.push(main);
 
-  const arrays = [product.productImages, product.images];
-  arrays.forEach((arr) => {
+  const target = product.product || product;
+  const arrayCandidates = [target.productImages, target.images];
+
+  arrayCandidates.forEach((arr) => {
     if (Array.isArray(arr)) {
       arr.forEach((img) => {
-        if (img && typeof img === 'string' && img.trim() && img !== 'undefined' && img !== 'null') {
-          const formatted = formatImageUrl(img, fallback);
+        const urlStr = extractStringUrl(img);
+        if (urlStr) {
+          const formatted = formatImageUrl(urlStr, fallback);
           if (formatted !== fallback && !list.includes(formatted)) {
             list.push(formatted);
           }
