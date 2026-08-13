@@ -42,7 +42,7 @@ function VerifyOtpContent({ initialEmail }: { initialEmail: string }) {
   }, [countdown]);
 
   const handleChange = (index: number, value: string) => {
-    if (!/^\d*৳/.test(value)) return;
+    if (!/^\d*$/.test(value)) return;
     const newOtp = [...otpValues];
     newOtp[index] = value.slice(-1);
     setOtpValues(newOtp);
@@ -62,7 +62,7 @@ function VerifyOtpContent({ initialEmail }: { initialEmail: string }) {
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pasteData = e.clipboardData.getData('text').trim();
-    if (/^\d{4,6}৳/.test(pasteData)) {
+    if (/^\d{4,6}$/.test(pasteData)) {
       const digits = pasteData.split('');
       const newOtp = [...otpValues];
       digits.forEach((digit, idx) => {
