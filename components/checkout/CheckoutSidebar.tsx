@@ -11,7 +11,7 @@ import PlaceOrderButton from './PlaceOrderButton';
 interface CheckoutSidebarProps {
   items: CartItem[];
   subtotal: number;
-  shippingFee: number;
+  shippingFee: number | null;
   coupon: Coupon | null;
   couponDiscount: number;
   categoryDiscount?: number;
@@ -20,6 +20,8 @@ interface CheckoutSidebarProps {
   isLoading: boolean;
   deliveryEnabled?: boolean;
   isFreeDelivery?: boolean;
+  isSettingsLoading?: boolean;
+  isSettingsError?: boolean;
   onCouponApplied: (coupon: Coupon, discountAmount: number) => void;
   onCouponRemoved: () => void;
 }
@@ -36,6 +38,8 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
   isLoading,
   deliveryEnabled = true,
   isFreeDelivery = false,
+  isSettingsLoading = false,
+  isSettingsError = false,
   onCouponApplied,
   onCouponRemoved,
 }) => {
@@ -52,6 +56,8 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
         grandTotal={grandTotal}
         deliveryEnabled={deliveryEnabled}
         isFreeDelivery={isFreeDelivery}
+        isSettingsLoading={isSettingsLoading}
+        isSettingsError={isSettingsError}
       />
 
       {/* 2. Coupon Section */}
@@ -77,7 +83,9 @@ export const CheckoutSidebar: React.FC<CheckoutSidebarProps> = ({
       <div className="pt-2">
         <PlaceOrderButton
           isLoading={isLoading}
-          disabled={items.length === 0 || !deliveryEnabled}
+          disabled={items.length === 0 || !deliveryEnabled || isSettingsLoading || isSettingsError}
+          isSettingsLoading={isSettingsLoading}
+          isSettingsError={isSettingsError}
           grandTotal={grandTotal}
         />
       </div>
