@@ -44,6 +44,8 @@ export const SafeImage: React.FC<SafeImageProps> = ({
       : typeof imgSrc === 'string' &&
         (imgSrc.startsWith('blob:') ||
           imgSrc.startsWith('data:') ||
+          imgSrc.includes('localhost') ||
+          imgSrc.includes('127.0.0.1') ||
           (imgSrc.startsWith('http') && !imgSrc.includes('cloudinary') && !imgSrc.includes('unsplash')));
 
   return (
