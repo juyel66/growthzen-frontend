@@ -5,18 +5,20 @@ import SafeImage from '@/components/ui/SafeImage';
 import Link from 'next/link';
 import { CartItem } from '@/types/cart';
 import { getProductTitle, getProductMainImage, getProductDisplayPrice } from '@/types/product';
-import { ShoppingBag, Truck, Tag, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, Truck, Tag, ShieldCheck, Loader2 } from 'lucide-react';
 
 interface OrderSummaryProps {
   items: CartItem[];
   subtotal: number;
-  shippingFee: number;
+  shippingFee: number | null;
   couponDiscount: number;
   categoryDiscount?: number;
   tax?: number;
   grandTotal: number;
   deliveryEnabled?: boolean;
   isFreeDelivery?: boolean;
+  isSettingsLoading?: boolean;
+  isSettingsError?: boolean;
 }
 
 export const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -29,6 +31,8 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
   grandTotal,
   deliveryEnabled = true,
   isFreeDelivery = false,
+  isSettingsLoading = false,
+  isSettingsError = false,
 }) => {
   const totalDiscount = couponDiscount + categoryDiscount;
 
@@ -50,12 +54,12 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
       {/* Cart Items Preview List */}
       <div className="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1">
         {items.map((item) => {
-          const product = item.product;
+          const product = item.product || item;
           const title = getProductTitle(product);
-          const image = getProductMainImage(product);
+          const image = getProductMainImage(item);
           const unitPrice = item.unitPrice ?? item.price ?? (product ? getProductDisplayPrice(product) : 0);
           const lineTotal = item.lineTotal ?? unitPrice * item.quantity;
-          const productSlug = product?.slug || product?.id;
+          const productSlug = product?.slug || product?.id || (item as any)?.productId;
 
           return (
             <div
@@ -129,7 +133,15 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
             <Truck className="w-3.5 h-3.5" /> Delivery charge
           </span>
           <span className="font-bold text-slate-900 dark:text-white">
-            {deliveryEnabled === false ? (
+            {isSettingsLoading ? (
+              <span className="inline-flex items-center gap-1 text-slate-400 font-semibold text-xs animate-pulse">
+                <Loader2 className="w-3 h-3 animate-spin" /> Loading...
+              </span>
+            ) : isSettingsError ? (
+              <span className="text-rose-500 font-bold text-[11px]">
+                Unable to load
+              </span>
+            ) : deliveryEnabled === false ? (
               <span className="text-rose-500 font-bold text-[11px]">
                 Unavailable
               </span>
@@ -138,7 +150,7 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
                 Free
               </span>
             ) : (
-              `৳${shippingFee.toFixed(2)}`
+              `৳${(shippingFee ?? 0).toFixed(2)}`
             )}
           </span>
         </div>
@@ -162,7 +174,17 @@ export const OrderSummary: React.FC<OrderSummaryProps> = ({
           )}
         </div>
         <span className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-          ৳{grandTotal.toFixed(2)}
+          {isSettingsLoading ? (
+            <span className="inline-flex items-center gap-1 text-slate-400 font-semibold text-base animate-pulse">
+              <Loader2 className="w-4 h-4 animate-spin" /> Loading...
+            </span>
+          ) : isSettingsError ? (
+            <span className="text-rose-500 font-semibold text-base">
+              Error
+            </span>
+          ) : (
+            `৳${grandTotal.toFixed(2)}`
+          )}
         </span>
       </div>
 
