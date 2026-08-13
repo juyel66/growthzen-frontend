@@ -189,7 +189,7 @@ export function parseYouTubeUrl(url: string): VideoPlatformInfo {
 
   // RegEx for matching YouTube URLs
   const regExp =
-    /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:\S+)?৳/;
+    /^(?:https?:\/\/)?(?:www\.)?(?:m\.)?(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/|shorts\/)|youtu\.be\/)([\w-]{11})(?:\S+)?$/;
   const match = trimmed.match(regExp);
 
   if (match && match[1]) {
@@ -251,7 +251,7 @@ export function parseVideoUrl(url: string): VideoPlatformInfo {
 
   // Direct video URL (.mp4, .webm, .mov, blob:, data:)
   const isDirectVideo =
-    /\.(mp4|webm|mov)(\?.*)?৳/i.test(trimmed) ||
+    /\.(mp4|webm|mov)(\?.*)?$/i.test(trimmed) ||
     trimmed.startsWith('blob:') ||
     trimmed.startsWith('data:video');
 
