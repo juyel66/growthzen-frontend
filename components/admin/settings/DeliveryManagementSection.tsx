@@ -11,8 +11,8 @@ export const DeliveryManagementSection: React.FC = () => {
 
   const [deliveryEnabled, setDeliveryEnabled] = useState<boolean>(true);
   const [freeDeliveryEnabled, setFreeDeliveryEnabled] = useState<boolean>(false);
-  const [insideDhakaCharge, setInsideDhakaCharge] = useState<number>(60);
-  const [outsideDhakaCharge, setOutsideDhakaCharge] = useState<number>(120);
+  const [insideDhakaCharge, setInsideDhakaCharge] = useState<number>(0);
+  const [outsideDhakaCharge, setOutsideDhakaCharge] = useState<number>(0);
   const [estimatedDays, setEstimatedDays] = useState<number>(3);
 
   useEffect(() => {
@@ -24,12 +24,12 @@ export const DeliveryManagementSection: React.FC = () => {
       const insideCost =
         data.insideDhakaCharge ??
         data.insideDhakaDeliveryCharge ??
-        60;
+        0;
 
       const outsideCost =
         data.outsideDhakaCharge ??
         data.outsideDhakaDeliveryCharge ??
-        120;
+        0;
 
       const days = data.estimatedDeliveryDays ?? 3;
 
