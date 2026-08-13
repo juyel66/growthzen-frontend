@@ -191,57 +191,64 @@ export const CheckoutForm: React.FC = () => {
   const categoryDiscount = checkoutSummary?.discount ?? cart?.summary?.discount ?? 0;
 
   // Dynamic delivery charge calculation from backend settings API
-  const { data: settingsData } = useGetSettingsQuery();
-  const data = (settingsData as any)?.data || settingsData;
-  const delivery = data?.delivery || {};
+  const {
+    data: settingsData,
+    isLoading: isSettingsQueryLoading,
+    isError: isSettingsError,
+  } = useGetSettingsQuery();
 
-  const rawFreeDeliveryEnabled = data?.freeDeliveryEnabled ?? delivery.freeDeliveryEnabled;
+  const settingsObj = (settingsData as any)?.data || settingsData;
+  const isSettingsLoading = isSettingsQueryLoading || (!settingsData && !isSettingsError);
+  const isSettingsReady = Boolean(settingsObj) && !isSettingsLoading && !isSettingsError;
+
+  const delivery = settingsObj?.delivery || {};
+
+  const rawFreeDeliveryEnabled = settingsObj?.freeDeliveryEnabled ?? delivery.freeDeliveryEnabled;
   const freeDeliveryEnabled =
     rawFreeDeliveryEnabled !== undefined
       ? Boolean(rawFreeDeliveryEnabled)
-      : data?.freeShippingMinOrderAmount === -1;
+      : settingsObj?.freeShippingMinOrderAmount === -1;
 
-  const rawDeliveryEnabled = data?.deliveryEnabled ?? delivery.deliveryEnabled;
+  const rawDeliveryEnabled = settingsObj?.deliveryEnabled ?? delivery.deliveryEnabled;
 
-  // Free delivery means delivery service IS available.
-  // Delivery is only disabled if freeDeliveryEnabled is false AND rawDeliveryEnabled is explicitly false.
   const deliveryEnabled =
     freeDeliveryEnabled || (rawDeliveryEnabled !== undefined ? Boolean(rawDeliveryEnabled) : true);
 
-  const insideCost = Number(
-    data?.insideDhakaCharge ??
-    data?.insideDhakaDeliveryCharge ??
+  const rawInsideCost =
+    settingsObj?.insideDhakaCharge ??
+    settingsObj?.insideDhakaDeliveryCharge ??
     delivery.insideDhakaCharge ??
-    delivery.insideDhakaDeliveryCharge ??
-    60
-  );
-  const outsideCost = Number(
-    data?.outsideDhakaCharge ??
-    data?.outsideDhakaDeliveryCharge ??
-    delivery.outsideDhakaCharge ??
-    delivery.outsideDhakaDeliveryCharge ??
-    120
-  );
+    delivery.insideDhakaDeliveryCharge;
 
-  let shippingFee = 0;
+  const rawOutsideCost =
+    settingsObj?.outsideDhakaCharge ??
+    settingsObj?.outsideDhakaDeliveryCharge ??
+    delivery.outsideDhakaCharge ??
+    delivery.outsideDhakaDeliveryCharge;
+
+  const insideCost = rawInsideCost !== undefined ? Number(rawInsideCost) : 0;
+  const outsideCost = rawOutsideCost !== undefined ? Number(rawOutsideCost) : 0;
+
+  let shippingFee: number | null = null;
   let isFreeDelivery = false;
 
-  if (!deliveryEnabled) {
-    // Delivery disabled -> cost = 0, isFreeDelivery = false
-    shippingFee = 0;
-    isFreeDelivery = false;
-  } else if (freeDeliveryEnabled) {
-    // Delivery enabled + Free Delivery -> cost = 0, isFreeDelivery = true
-    shippingFee = 0;
-    isFreeDelivery = true;
-  } else {
-    // Delivery enabled + Normal Delivery -> cost = configured charge
-    shippingFee = activeZone === 'outside_dhaka' ? outsideCost : insideCost;
-    isFreeDelivery = false;
+  if (isSettingsReady) {
+    if (!deliveryEnabled) {
+      shippingFee = 0;
+      isFreeDelivery = false;
+    } else if (freeDeliveryEnabled) {
+      shippingFee = 0;
+      isFreeDelivery = true;
+    } else {
+      shippingFee = activeZone === 'outside_dhaka' ? outsideCost : insideCost;
+      isFreeDelivery = false;
+    }
   }
 
   const tax = cart?.summary?.tax ?? 0;
-  const grandTotal = Math.max(0, subtotal - categoryDiscount - couponDiscount + shippingFee + tax);
+  const grandTotal = isSettingsReady && shippingFee !== null
+    ? Math.max(0, subtotal - categoryDiscount - couponDiscount + shippingFee + tax)
+    : Math.max(0, subtotal - categoryDiscount - couponDiscount + tax);
 
   // Keep fields linked & prefill profile when logged in
   const watchCustomerName = watch('customerName');
@@ -294,6 +301,15 @@ export const CheckoutForm: React.FC = () => {
   };
 
   const onSubmit = async (data: CheckoutFormSchema) => {
+    if (!isSettingsReady) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Delivery Settings Not Loaded',
+        text: 'Unable to calculate delivery charges. Please wait a moment or reload the page.',
+      });
+      return;
+    }
+
     if (checkoutItems.length === 0) {
       Swal.fire({
         icon: 'warning',
@@ -547,6 +563,8 @@ export const CheckoutForm: React.FC = () => {
           isLoading={isSubmitting}
           deliveryEnabled={deliveryEnabled}
           isFreeDelivery={isFreeDelivery}
+          isSettingsLoading={isSettingsLoading}
+          isSettingsError={isSettingsError}
           onCouponApplied={handleCouponApplied}
           onCouponRemoved={handleCouponRemoved}
         />
