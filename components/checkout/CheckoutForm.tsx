@@ -186,9 +186,26 @@ export const CheckoutForm: React.FC = () => {
     return sum + price * item.quantity;
   }, 0);
 
+  const subtotal = calculatedSubtotal;
 
-  const subtotal = checkoutSummary?.subtotal ?? calculatedSubtotal;
-  const categoryDiscount = checkoutSummary?.discount ?? cart?.summary?.discount ?? 0;
+  // Calculate genuine active category discount only if category discount is explicitly enabled for the product category
+  const activeCategoryDiscount = checkoutItems.reduce((sum, item) => {
+    const product = item.product || item;
+    if (!product) return sum;
+
+    const categoryDetails = (product as any).categoryDetails || (typeof (product as any).category === 'object' ? (product as any).category : null);
+    const isCatDiscountEnabled = categoryDetails?.discountEnabled ?? false;
+    const catDiscountPct = categoryDetails?.discountPercentage ?? 0;
+
+    if (isCatDiscountEnabled && catDiscountPct > 0) {
+      const basePrice = (product as any).customerSellPrice ?? (product as any).price ?? item.unitPrice ?? 0;
+      const catDiscountPerUnit = (basePrice * catDiscountPct) / 100;
+      return sum + catDiscountPerUnit * item.quantity;
+    }
+    return sum;
+  }, 0);
+
+  const categoryDiscount = Math.max(0, activeCategoryDiscount);
 
   // Dynamic delivery charge calculation from backend settings API
   const {
@@ -245,10 +262,13 @@ export const CheckoutForm: React.FC = () => {
     }
   }
 
-  const tax = cart?.summary?.tax ?? 0;
+  const tax = Math.max(0, cart?.summary?.tax ?? 0);
+  const safeCouponDiscount = Math.max(0, couponDiscount);
+  const safeShippingFee = Math.max(0, shippingFee ?? 0);
+
   const grandTotal = isSettingsReady && shippingFee !== null
-    ? Math.max(0, subtotal - categoryDiscount - couponDiscount + shippingFee + tax)
-    : Math.max(0, subtotal - categoryDiscount - couponDiscount + tax);
+    ? Math.max(0, subtotal - categoryDiscount - safeCouponDiscount + safeShippingFee + tax)
+    : Math.max(0, subtotal - categoryDiscount - safeCouponDiscount + tax);
 
   // Keep fields linked & prefill profile when logged in
   const watchCustomerName = watch('customerName');
